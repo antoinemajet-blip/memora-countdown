@@ -80,7 +80,6 @@ select option{background:#1c211e;color:white}
 <header>
 <div class="brand">MEMORA · MOMENTS</div>
 <div class="head-actions">
-<button class="round" id="cyclePhoto" aria-label="Changer de photo d’ambiance" title="Photo d’ambiance">↗</button>
 <button class="round" id="openSettings" aria-label="Réglages d’affichage" title="Réglages">⚙</button>
 </div>
 </header>
@@ -236,7 +235,6 @@ $("darkness").addEventListener("input",()=>{$("darknessValue").textContent=Math.
 $("photoPreview").addEventListener("pointerdown",e=>{pointerStart={x:e.clientX,y:e.clientY,px:Number($("photoPreview").dataset.x||50),py:Number($("photoPreview").dataset.y||50)};$("photoPreview").setPointerCapture?.(e.pointerId)});
 $("photoPreview").addEventListener("pointermove",e=>{if(!pointerStart||!(e.buttons||e.pressure))return;const rect=$("photoPreview").getBoundingClientRect();const x=Math.max(0,Math.min(100,pointerStart.px-(e.clientX-pointerStart.x)/rect.width*55));const y=Math.max(0,Math.min(100,pointerStart.py-(e.clientY-pointerStart.y)/rect.height*55));$("photoPreview").dataset.x=x;$("photoPreview").dataset.y=y;$("photoPreview").style.objectPosition=x+"% "+y+"%"});
 $("photoPreview").addEventListener("pointerup",()=>{if(pointerStart){const old=events.find(x=>x.id===editing);const x=Number($("photoPreview").dataset.x||50),y=Number($("photoPreview").dataset.y||50);$("photoPreview").dataset.x=x;$("photoPreview").dataset.y=y;if(old){old.posX=x;old.posY=y}pointerStart=null}});
-$("cyclePhoto").onclick=()=>{const e=current();if(!e)return;photoIndex=(photoIndex+1)%photos.length;e.image=photos[photoIndex];e.zoom=1;e.posX=50;e.posY=50;if(save())render();notify("Photo d’ambiance changée")};
 $("openSettings").onclick=()=>{$("globalShade").value=globalShade;$("globalShadeValue").textContent=Math.round(globalShade*100)+"%";$("showSeconds").value=localStorage.getItem("memora-show-seconds")||"yes";$("settingsModal").classList.add("open")};
 $("globalShade").addEventListener("input",()=>{$("globalShadeValue").textContent=Math.round(Number($("globalShade").value)*100)+"%";$("hero").style.setProperty("--shade",String($("globalShade").value))});
 $("closeSettings").onclick=()=>{globalShade=Number($("globalShade").value);localStorage.setItem("memora-show-seconds",$("showSeconds").value);$("secondsUnit").style.display=$("showSeconds").value==="no"?"none":"";const e=current();if(e&&typeof e.shade!=="number")e.shade=globalShade;save();$("settingsModal").classList.remove("open");render();notify("Affichage mis à jour")};
