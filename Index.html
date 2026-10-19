@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#101510">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Memora">
+<title>Memora — Every moment matters</title>
+<style>
+:root{color-scheme:dark;--cream:#f4f0e7;--muted:#c4c4b9;--gold:#e7c99a;--glass:rgba(20,24,21,.48);--accent:#e7c99a;--shade:.42}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:#101510;color:var(--cream);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+body{min-height:100svh}button,input,textarea,select{font:inherit}button{cursor:pointer;touch-action:manipulation}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.hero{position:relative;min-height:100svh;overflow:hidden;background:#202d2b;isolation:isolate}
+.hero.empty-state{background:radial-gradient(ellipse at 50% 35%,#263a35 0%,#101510 72%)}
+.hero.empty-state .photo,.hero.empty-state .shade{display:none}
+.hero.empty-state .intro{margin:auto 0;padding-top:40px;text-align:center}
+.hero.empty-state .eyebrow{font-size:11px}
+.hero.empty-state h1{font-size:clamp(38px,10vw,58px);letter-spacing:-1px}
+.hero.empty-state .subtitle{margin:0 auto;max-width:30ch}
+.hero.empty-state .timer{display:none}
+.hero.empty-state .event-row{display:none}
+.hero.empty-state #edit{display:none}
+.hero.empty-state .actions{display:flex}
+.hero.empty-state #viewAll{display:block}
+.hero.empty-state .footer{justify-content:center}
+.empty-cta{display:none}
+.hero.empty-state .empty-cta{display:block;margin-top:26px}
+.empty-cta .primary{width:100%;max-width:330px}
+.photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:var(--pos,50% 50%);transform:scale(var(--zoom,1));transition:opacity .3s,transform .2s;z-index:-2}
+.shade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.48),transparent 28%,rgba(0,0,0,.08) 46%,rgba(0,0,0,var(--shade)) 100%);z-index:-1;pointer-events:none}
+.content{position:relative;z-index:1;min-height:100svh;padding:calc(env(safe-area-inset-top) + 19px) 21px calc(env(safe-area-inset-bottom) + 23px);display:flex;flex-direction:column;max-width:760px;margin:auto}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand{font-size:12px;letter-spacing:3.5px;text-transform:uppercase;font-weight:650;text-shadow:0 1px 12px #0008}
+.head-actions{display:flex;gap:8px}
+.round{border:1px solid #ffffff55;background:#ffffff18;color:white;width:42px;height:42px;border-radius:50%;font-size:19px;backdrop-filter:blur(14px);display:grid;place-items:center}
+.intro{margin-top:auto;padding-top:65px}
+.eyebrow{font-size:10px;letter-spacing:2.8px;text-transform:uppercase;color:var(--accent);margin-bottom:14px;font-weight:650;text-shadow:0 1px 12px #0008}
+h1{font-family:Georgia,"Times New Roman",serif;font-size:clamp(43px,12vw,76px);line-height:.98;letter-spacing:-2px;font-weight:400;margin:0 0 15px;overflow-wrap:anywhere;text-shadow:0 2px 24px #0006;white-space:pre-line;color:var(--title-color,#f4f0e7)}
+.subtitle{font-size:15px;color:var(--subtitle-color,#f1eee7);line-height:1.5;margin:0;max-width:38ch;text-shadow:0 1px 10px #0008}
+.timer{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin:32px 0 26px;max-width:580px}
+.unit{text-align:center;border-right:1px solid #ffffff38;min-width:0}
+.unit:last-child{border:0}
+.number{font-size:clamp(28px,8vw,45px);font-weight:300;letter-spacing:-1.5px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.unit-label{font-size:9px;letter-spacing:1.6px;text-transform:uppercase;color:#dedbd3;margin-top:7px}
+.bottom{margin-top:7px}
+.event-row{display:flex;align-items:center;gap:8px;overflow-x:auto;padding:3px 0 15px;scrollbar-width:none}
+.event-row::-webkit-scrollbar{display:none}
+.pill{flex:0 0 auto;padding:10px 14px;border-radius:30px;border:1px solid #ffffff50;background:#ffffff16;color:white;font-size:12px;backdrop-filter:blur(14px);max-width:210px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pill.active{background:var(--cream);color:#252720;border-color:var(--cream)}
+.actions{display:flex;gap:9px}
+.primary{flex:1;border:0;border-radius:30px;padding:15px 16px;background:var(--cream);color:#252720;font-size:14px;font-weight:650}
+.secondary{border:1px solid #ffffff55;border-radius:30px;padding:14px 17px;background:#ffffff16;color:white}
+.footer{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-top:18px;font-size:9px;letter-spacing:1.4px;text-transform:uppercase;color:#ffffffc0}
+.footer span:last-child{text-align:right}
+.modal{position:fixed;inset:0;z-index:10;background:#000a;display:none;align-items:flex-end;justify-content:center;padding-top:22px;backdrop-filter:blur(5px)}
+.modal.open{display:flex}
+.sheet{width:100%;max-width:560px;background:#1c211e;border:1px solid #ffffff20;border-radius:25px 25px 0 0;padding:25px 21px calc(env(safe-area-inset-bottom) + 24px);max-height:94svh;overflow:auto;overscroll-behavior:contain}
+.sheet h2{font:32px Georgia,serif;margin:0 0 7px}
+.sheet>p{font-size:13px;color:var(--muted);margin:0 0 18px;line-height:1.5}
+label{display:block;font-size:12px;color:#d8d4ca;margin:16px 0 7px}
+input,textarea,select{width:100%;padding:13px;border:1px solid #ffffff30;border-radius:12px;background:#ffffff0c;color:white;outline:none;min-width:0}
+input[type="color"]{padding:4px;height:46px}
+input[type="range"]{padding:0;accent-color:var(--accent)}
+input[type="file"]{padding:10px;font-size:12px}
+input:focus,textarea:focus,select:focus{border-color:var(--accent)}
+select option{background:#1c211e;color:white}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+.helper{font-size:11px;color:#aaa99f;line-height:1.45;margin-top:7px}
+.form-actions{display:flex;gap:9px;margin-top:23px}
+.form-actions button{flex:1}
+.delete{font-size:12px;color:#ffcbc1;text-decoration:underline;background:none;border:0;padding:17px 0 0}
+.section-title{font-size:10px;text-transform:uppercase;letter-spacing:2px;color:var(--gold);margin:23px 0 4px}
+.photo-preview{width:100%;height:190px;border-radius:14px;object-fit:cover;background:#303a34;display:block;border:1px solid #ffffff20}
+.preview-wrap{position:relative;overflow:hidden;border-radius:14px;touch-action:pan-y}
+.preview-wrap .photo-preview{touch-action:pan-y}
+.small-btn{border:1px solid #ffffff35;background:#ffffff0c;color:#f4f0e7;border-radius:10px;padding:10px;font-size:12px}
+.range-row{display:grid;grid-template-columns:1fr 42px;align-items:center;gap:10px}
+.range-value{text-align:right;font-size:11px;color:#cfc7b8}
+.toast{position:fixed;left:18px;right:18px;bottom:calc(env(safe-area-inset-bottom) + 18px);z-index:20;text-align:center;background:#f4f0e7;color:#20231f;padding:12px 16px;border-radius:15px;font-size:13px;box-shadow:0 8px 30px #0006;display:none}
+.toast.show{display:block}
+.celebration{position:fixed;inset:0;z-index:30;display:none;place-items:center;padding:24px;background:radial-gradient(ellipse at center,rgba(67,77,55,.88),rgba(5,8,6,.94));backdrop-filter:blur(12px);text-align:center;overflow:hidden}
+.celebration.show{display:grid;animation:celebrateIn .55s ease both}
+.celebration-card{max-width:430px;position:relative;z-index:2;animation:celebrateFloat 2.5s ease-in-out infinite}
+.celebration-kicker{font-size:11px;letter-spacing:4px;text-transform:uppercase;color:#e7c99a;margin-bottom:18px}
+.celebration-title{font:clamp(42px,11vw,68px)/1 Georgia,serif;color:#fff5df;text-shadow:0 0 35px #e7c99a55;margin:0 0 18px}
+.celebration-message{color:#f4f0e7;font-size:15px;line-height:1.6;margin:0 auto 26px}
+.celebration-close{border:1px solid #e7c99a99;border-radius:30px;padding:13px 24px;background:#e7c99a;color:#20231f;font-weight:650}
+/* Ambiances Jour J renforcées */
+.celebration{isolation:isolate;background:radial-gradient(ellipse at 50% 42%,rgba(181,126,43,.62),rgba(6,8,12,.97) 72%);}
+.celebration:before{content:"";position:absolute;inset:-25%;pointer-events:none;z-index:0;background:conic-gradient(from 0deg,transparent 0 8%,rgba(255,225,155,.14) 10%,transparent 13% 25%,rgba(255,255,255,.09) 27%,transparent 31% 50%);animation:memoraRays 18s linear infinite;}
+.celebration-card{padding:30px 24px;border:1px solid rgba(255,230,177,.38);border-radius:28px;background:linear-gradient(145deg,rgba(255,255,255,.13),rgba(255,255,255,.035));box-shadow:0 25px 100px #0008, inset 0 1px 0 #ffffff2b;backdrop-filter:blur(14px);}
+.celebration-title{animation:titleReveal .8s cubic-bezier(.2,.8,.2,1) both;text-wrap:balance;}
+.celebration.effect-confetti{background:radial-gradient(ellipse at 50% 35%,rgba(139,97,34,.75),rgba(6,8,12,.97) 72%)}
+.celebration.effect-glow{background:radial-gradient(circle at 50% 45%,#f9d98b88 0, #b7783266 24%,rgba(5,8,12,.98) 70%)}
+.celebration.effect-hearts{background:radial-gradient(ellipse at center,#9f275eaa 0,#45132eaa 35%,#09050b 78%)}
+.celebration.effect-stars{background:radial-gradient(ellipse at 50% 40%,#333e9baa 0,#111633 38%,#02030b 78%)}
+.celebration.effect-flash{animation:memoraFlash .8s ease both;background:#fff}
+.celebration.effect-flash .celebration-card{animation:flashCard .9s cubic-bezier(.2,.8,.2,1) both}
+.celebration.effect-nature{background:radial-gradient(ellipse at 50% 40%,#367a51cc 0,#143c2a 38%,#030a06 80%)}
+.celebration.effect-hearts:before{background:radial-gradient(ellipse at center,rgba(255,105,170,.2),transparent 62%);animation:heartPulse 2s ease-in-out infinite alternate}
+.celebration.effect-stars:before{background:radial-gradient(circle at 20% 25%,#fff9 0 1px,transparent 2px),radial-gradient(circle at 75% 35%,#c9d5ff 0 2px,transparent 3px),radial-gradient(circle at 40% 70%,#fff8 0 1px,transparent 2px);background-size:140px 140px,190px 190px,110px 110px;animation:starDrift 12s linear infinite}
+.celebration.effect-glow .confetti{opacity:.2;filter:blur(1px)}
+.celebration.effect-nature .confetti{opacity:.3;filter:hue-rotate(60deg)}
+.memora-particle{position:absolute;left:var(--x);top:var(--y);font-size:var(--size);line-height:1;pointer-events:none;z-index:1;opacity:0;filter:drop-shadow(0 0 8px currentColor);animation:particleBurst var(--dur) cubic-bezier(.1,.7,.2,1) var(--delay) forwards;}
+@keyframes memoraRays{to{transform:rotate(360deg)}}@keyframes titleReveal{from{opacity:0;transform:translateY(18px) scale(.94);filter:blur(8px)}to{opacity:1;transform:none;filter:blur(0)}}@keyframes heartPulse{from{transform:scale(.9);opacity:.45}to{transform:scale(1.15);opacity:1}}@keyframes starDrift{from{transform:translateY(-3%) rotate(0)}to{transform:translateY(3%) rotate(10deg)}}@keyframes particleBurst{0%{opacity:0;transform:translate3d(0,35px,0) scale(.3) rotate(0)}12%{opacity:1}75%{opacity:.95}100%{opacity:0;transform:translate3d(var(--dx),-110px,0) scale(1.25) rotate(var(--rot))}}
+.confetti{background-image:radial-gradient(circle,#ff8bb4 2px,transparent 3px),radial-gradient(circle,#ffd9e7 2px,transparent 3px);background-size:80px 90px,130px 120px}
+.celebration.effect-stars .confetti{background-image:radial-gradient(circle,#fff5b8 1.5px,transparent 2px),radial-gradient(circle,#aab9ff 2px,transparent 2.5px);background-size:53px 63px,103px 117px}
+.celebration.effect-glow .confetti,.celebration.effect-nature .confetti{opacity:.28}
+.celebration.effect-flash .celebration-card{animation:flashCard .9s ease both}
+@keyframes memoraFlash{0%{background:#fff}100%{background:rgba(5,8,6,.94)}}@keyframes flashCard{0%{opacity:0;transform:scale(.85)}35%{opacity:1;transform:scale(1.04)}100%{opacity:1;transform:scale(1)}}
+.confetti{position:absolute;inset:-15%;pointer-events:none;background-image:radial-gradient(circle,#f4d7a1 1.5px,transparent 2px),radial-gradient(circle,#fff2cf 2px,transparent 2.5px),radial-gradient(circle,#b8c49a 1.5px,transparent 2px);background-size:71px 93px,113px 127px,157px 109px;background-position:0 0,30px 40px,70px 12px;animation:confettiFall 7s linear infinite;opacity:.75}
+@keyframes celebrateIn{from{opacity:0}to{opacity:1}}@keyframes celebrateFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}@keyframes confettiFall{from{transform:translateY(-5%) rotate(0)}to{transform:translateY(10%) rotate(8deg)}}
+.list-screen{position:fixed;inset:0;z-index:8;display:none;overflow:auto;background:#101510;padding:calc(env(safe-area-inset-top) + 18px) 18px calc(env(safe-area-inset-bottom) + 28px)}
+.list-screen.open{display:block}.list-inner{max-width:720px;margin:0 auto}.list-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}.list-head h2{font:32px Georgia,serif;margin:0}.event-card{display:flex;align-items:center;gap:12px;width:100%;text-align:left;color:var(--cream);background:#ffffff0d;border:1px solid #ffffff20;border-radius:17px;padding:10px;margin:10px 0;position:relative;touch-action:pan-y;transition:background .18s,transform .18s;overflow:hidden}.event-card.swiping{background:#8e302b;transform:translateX(18px);box-shadow:0 8px 24px #0005}.event-card.swiping .swipe-delete-indicator{opacity:1;transform:scale(1)}.swipe-delete-indicator{position:absolute;left:12px;top:50%;transform:scale(.75) translateY(-50%);opacity:0;color:#fff;font-size:22px;transition:opacity .12s,transform .12s;pointer-events:none}.event-card.swiping .event-thumb,.event-card.swiping .event-card-main,.event-card.swiping .event-card-count{filter:brightness(.78)}.recurrence-chip{display:inline-flex;align-items:center;gap:5px;margin-top:7px;padding:4px 8px;border:1px solid #ffffff35;border-radius:20px;background:#ffffff14;color:#f3d7a5;font-size:11px;letter-spacing:.2px}.event-card-recurrence{display:block;color:#e8c995;font-size:11px;margin-top:5px}.swipe-hint{font-size:10px;color:#ffcbc1;white-space:nowrap;letter-spacing:.3px}.event-thumb{width:76px;height:76px;flex:0 0 76px;object-fit:cover;border-radius:12px;background:#28312c}.event-card-main{min-width:0;flex:1}.event-card-name{font-weight:650;overflow-wrap:anywhere}.event-card-date{font-size:12px;color:#c4c4b9;margin-top:5px}.event-card-count{font-size:12px;color:var(--gold);white-space:nowrap}.list-section{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin:22px 0 8px}.nav-row{display:flex;gap:9px;margin:18px 0 4px}.nav-row button{flex:1}.home-button{border:1px solid #ffffff40;border-radius:28px;padding:13px 16px;background:#ffffff12;color:white;font-weight:600}
+@media(min-width:650px){.content{padding-left:44px;padding-right:44px}.number{font-size:48px}.intro{padding-top:80px}.hero{min-height:100svh}}
+@media(max-height:700px){.intro{padding-top:35px}.timer{margin:22px 0 18px}.content{padding-top:calc(env(safe-area-inset-top) + 12px);padding-bottom:calc(env(safe-area-inset-bottom) + 14px)}}
+</style>
+</head>
+<body>
+<main class="hero" id="hero">
+<img class="photo" id="photo" alt="" src="https://images.unsplash.com/photo-1470770841072-f978cf4d019e?auto=format&fit=crop&w=1800&q=85">
+<div class="shade" id="shade"></div>
+<div class="content">
+<header>
+<div class="brand">MEMORA · MOMENTS</div>
+<div class="head-actions">
+<button class="round" id="openSettings" aria-label="Réglages d’affichage" title="Réglages">⚙</button>
+</div>
+</header>
+<section class="intro">
+<div class="eyebrow" id="eyebrow">A LITTLE CLOSER, EVERY DAY</div>
+<h1 id="eventTitle">Your next adventure.</h1>
+<p class="subtitle" id="eventSubtitle">Chaque grand moment commence par l'attente.</p>
+<div id="recurrenceLabel" class="recurrence-chip" style="display:none"></div>
+<div class="timer" id="timer" aria-live="polite">
+<div class="unit"><div class="number" id="days">000</div><div class="unit-label">Jours</div></div>
+<div class="unit"><div class="number" id="hours">00</div><div class="unit-label">Heures</div></div>
+<div class="unit"><div class="number" id="minutes">00</div><div class="unit-label">Minutes</div></div>
+<div class="unit" id="secondsUnit"><div class="number" id="seconds">00</div><div class="unit-label">Secondes</div></div>
+</div>
+</section>
+<section class="bottom">
+<div class="event-row" id="eventList"></div>
+<div class="empty-cta"><button class="primary" id="addEmpty">＋ Créer mon premier événement</button></div>
+<div class="actions">
+<button class="primary" id="viewAll">☷ Tous mes événements</button>
+<button class="secondary" id="add">＋</button>
+<button class="secondary" id="edit" aria-label="Modifier l’événement" title="Modifier">✎</button>
+</div>
+<div class="footer"><span>Make time meaningful</span><span id="dateLabel">YOUR STORY, YOUR TIME</span></div>
+</section>
+</div>
+</main>
+
+<div class="list-screen" id="listScreen" aria-label="Tous mes événements">
+ <div class="list-inner">
+  <div class="list-head"><h2>Mes événements</h2><button class="round" id="closeList" aria-label="Retour à l’accueil">✕</button></div>
+  <p class="helper">Tous tes moments, classés du plus proche au plus lointain. Glisse une carte de gauche à droite pour la supprimer.</p>
+  <div class="nav-row"><button class="primary" id="addFromList">＋ Créer un événement</button></div>
+  <div class="list-section">À venir</div><div id="upcomingEvents"></div>
+  <div class="list-section" id="pastHeading">Événements passés</div><div id="pastEvents"></div>
+ </div>
+</div>
+<div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="formTitle">
+<form class="sheet" id="eventForm">
+<h2 id="formTitle">Un nouveau souvenir</h2>
+<p>Un moment à attendre, une histoire à écrire.</p>
+<label for="name">Nom de l’événement</label>
+<input id="name" maxlength="70" placeholder="Ex. Nos prochaines vacances" required>
+<label for="date">Date et heure</label>
+<input id="date" type="datetime-local" required>
+<label for="recurrence">Répétition</label>
+<select id="recurrence"><option value="none">Aucune répétition</option><option value="yearly">Chaque année</option><option value="monthly">Chaque mois</option><option value="weekly">Chaque semaine</option><option value="daily">Chaque jour</option></select>
+<div class="helper">Pour Noël ou un anniversaire, choisis « Chaque année » : Memora calculera automatiquement la prochaine date.</div>
+<label for="description">Commentaire (facultatif)</label>
+<textarea id="description" maxlength="300" rows="3" placeholder="Quelques mots sur ce moment…"></textarea>
+<label for="category">Catégorie</label>
+<select id="category"><option value="voyage">✈️ Voyage</option><option value="amour">♡ À deux</option><option value="anniversaire">🎂 Anniversaire</option><option value="objectif">✦ Objectif</option><option value="autre" selected>✧ Autre moment</option></select>
+<div class="section-title">Ambiance du Jour J</div>
+<label for="visualEffect">Effet visuel</label>
+<select id="visualEffect"><option value="confetti">🎉 Confettis festifs</option><option value="glow">✨ Halo doré</option><option value="hearts">💖 Cœurs romantiques</option><option value="stars">🌌 Étoiles magiques</option><option value="flash">⚡ Flash spectaculaire</option><option value="nature">🌿 Lueur naturelle</option></select>
+<div class="grid2"><div><label for="eventSound">Son à jouer</label><select id="eventSound"><option value="none">🔇 Aucun son</option><option value="chime">🔔 Clochette</option><option value="party">🎊 Fête</option><option value="romantic">❤️ Mélodie douce</option><option value="magic">✨ Son magique</option><option value="victory">🏆 Victoire</option></select></div><div style="display:flex;align-items:end"><button type="button" class="secondary" id="previewAmbience" style="width:100%;padding:13px">▶ Prévisualiser</button></div></div>
+<div class="helper">Teste l’effet et le son avant d’enregistrer. Le son se déclenche lorsque Memora détecte le Jour J, si le navigateur autorise la lecture audio.</div>
+<div class="section-title">Photo & cadrage</div>
+<label for="imageFile">Choisir une photo dans mon iPhone</label>
+<input id="imageFile" type="file" accept="image/*">
+<div class="helper">La photo est optimisée avant sauvegarde. Pour préserver l’espace, une image trop grande sera réduite.</div>
+<div style="margin-top:12px" class="preview-wrap"><img id="photoPreview" class="photo-preview" alt="Aperçu du cadrage"></div>
+<div class="grid2">
+<div><label for="zoom">Zoom</label><div class="range-row"><input id="zoom" type="range" min="1" max="2.5" step=".05" value="1"><span class="range-value" id="zoomValue">1×</span></div></div>
+<div><label for="darkness">Voile sombre</label><div class="range-row"><input id="darkness" type="range" min="0" max=".8" step=".02" value=".42"><span class="range-value" id="darknessValue">42%</span></div></div>
+</div>
+<div class="helper">Le zoom et le cadrage seront conservés pour cet événement. Tu peux aussi déplacer la photo dans l’aperçu.</div>
+<div class="section-title">Style</div>
+<div class="grid2">
+<div><label for="accent">Couleur d’accent</label><input id="accent" type="color" value="#e7c99a"></div>
+<div><label for="textStyle">Style du titre</label><select id="textStyle"><option value="serif">Élégant (sérif)</option><option value="sans">Moderne</option><option value="handwritten">Manuscrit</option></select></div>
+</div>
+<div class="grid2">
+<div><label for="titleSize">Taille du titre</label><div class="range-row"><input id="titleSize" type="range" min="40" max="88" step="1" value="72"><span class="range-value" id="titleSizeValue">72 px</span></div></div>
+<div><label for="subtitleSize">Taille du sous-titre</label><div class="range-row"><input id="subtitleSize" type="range" min="12" max="24" step="1" value="15"><span class="range-value" id="subtitleSizeValue">15 px</span></div></div>
+</div>
+<div class="grid2">
+<div><label for="titleColor">Couleur du titre</label><input id="titleColor" type="color" value="#f4f0e7"></div>
+<div><label for="subtitleColor">Couleur du sous-titre</label><input id="subtitleColor" type="color" value="#f1eee7"></div>
+</div>
+<label for="letterSpacing">Espacement des lettres du titre</label>
+<div class="range-row"><input id="letterSpacing" type="range" min="-3" max="3" step=".25" value="-2"><span class="range-value" id="letterSpacingValue">-2 px</span></div>
+<div class="form-actions">
+<button type="button" class="secondary" id="cancel">Annuler</button>
+<button type="submit" class="primary" id="saveButton">Enregistrer</button>
+</div>
+<button type="button" class="delete" id="remove" hidden>Supprimer cet événement</button>
+</form>
+</div>
+
+<div class="modal" id="settingsModal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+<div class="sheet">
+<h2 id="settingsTitle">Personnaliser Memora</h2>
+<p>Choisis la façon dont le compte à rebours s’affiche.</p>
+<button type="button" class="secondary" id="enableNotifications" style="width:100%;margin:4px 0 12px">Activer les notifications</button><div class="helper" id="notificationHelp">Les notifications dépendent des autorisations iOS et du mode d’installation de Memora.</div><label for="showSeconds">Affichage des secondes</label>
+<select id="showSeconds"><option value="yes">Afficher les secondes</option><option value="no">Masquer les secondes</option></select>
+<label for="globalShade">Intensité du voile par défaut</label>
+<div class="range-row"><input id="globalShade" type="range" min="0" max=".8" step=".02" value=".42"><span class="range-value" id="globalShadeValue">42%</span></div>
+<div class="helper">Le réglage de voile de chaque événement reste prioritaire. Ce réglage sert de valeur par défaut aux nouveaux événements.</div>
+<div class="form-actions"><button class="primary" id="closeSettings">Terminé</button></div>
+</div>
+</div>
+<div class="celebration" id="celebration" role="dialog" aria-modal="true" aria-labelledby="celebrationTitle"><div class="confetti" aria-hidden="true"></div><div class="celebration-card"><div class="celebration-kicker">MEMORA · LE GRAND JOUR</div><h2 class="celebration-title" id="celebrationTitle">C’est aujourd’hui ✨</h2><p class="celebration-message" id="celebrationMessage">Le moment que tu attendais est arrivé.</p><button class="celebration-close" id="closeCelebration">Profiter du moment</button></div></div><div class="toast" id="toast" role="status"></div>
+
+<script>
+(function(){
+"use strict";
+const $=id=>document.getElementById(id);
+const photos=[
+"https://images.unsplash.com/photo-1470770841072-f978cf4d019e?auto=format&fit=crop&w=1800&q=85",
+"https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1800&q=85",
+"https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1800&q=85",
+"https://images.unsplash.com/photo-1470252649378-9c29740c9fa8?auto=format&fit=crop&w=1800&q=85"
+];
+let events=[];
+try{const saved=JSON.parse(localStorage.getItem("memora-events")||"null");events=Array.isArray(saved)?saved:[]}catch(e){events=[]}
+if(!Array.isArray(events))events=[];
+// Keep the original localStorage key and tolerate older event objects.
+events=events.map(e=>({...e,zoom:Number(e.zoom)||1,shade:typeof e.shade==="number"?e.shade:.42,accent:e.accent||"#e7c99a",textStyle:e.textStyle||"serif",titleSize:Number(e.titleSize)||72,subtitleSize:Number(e.subtitleSize)||15,titleColor:e.titleColor||"#f4f0e7",subtitleColor:e.subtitleColor||"#f1eee7",letterSpacing:Number.isFinite(e.letterSpacing)?e.letterSpacing:-2,posX:Number.isFinite(e.posX)?e.posX:50,posY:Number.isFinite(e.posY)?e.posY:50,category:e.category||"autre"}));
+const nearestUpcoming=()=>[...events].filter(e=>occurrenceDate(e)>=Date.now()||isActiveToday(e)).sort((a,b)=>{const aa=isActiveToday(a)?Date.now():occurrenceDate(a),bb=isActiveToday(b)?Date.now():occurrenceDate(b);return aa-bb})[0];
+let selected=(nearestUpcoming()||events[0]||{}).id||null,editing=null,photoIndex=0,pendingImage=null,pointerStart=null,toastTimer=null,globalShade=.42;
+function notify(msg){$("toast").textContent=msg;$("toast").classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(()=>$("toast").classList.remove("show"),2600)}
+function save(){try{localStorage.setItem("memora-events",JSON.stringify(events));return true}catch(e){notify("Stockage saturé : essaie une photo plus légère.");return false}}
+function current(){const chosen=events.find(e=>e.id===selected);if(chosen&&(occurrenceDate(chosen)>=Date.now()||isActiveToday(chosen)))return chosen;return nearestUpcoming()||null}
+function safeDate(d){const t=new Date(d).getTime();return Number.isFinite(t)?t:Date.now()}
+function occurrenceDate(e){
+ const base=new Date(e.date);if(!Number.isFinite(base.getTime()))return Date.now();
+ const rule=e.recurrence||"none";if(rule==="none")return base.getTime();
+ const now=new Date();let next=new Date(base);
+ if(rule==="yearly"){
+   next.setFullYear(now.getFullYear());
+   // Handle Feb. 29 safely in non-leap years.
+   if(next.getMonth()!==base.getMonth()){next.setDate(0)}
+   if(next.getTime()<Date.now()){next=new Date(base);next.setFullYear(now.getFullYear()+1);if(next.getMonth()!==base.getMonth())next.setDate(0)}
+ } else if(rule==="monthly"){
+   const day=base.getDate();next=new Date(now.getFullYear(),now.getMonth(),1,base.getHours(),base.getMinutes(),base.getSeconds());
+   next.setDate(Math.min(day,new Date(next.getFullYear(),next.getMonth()+1,0).getDate()));
+   if(next.getTime()<Date.now()){next.setMonth(next.getMonth()+1,1);next.setDate(Math.min(day,new Date(next.getFullYear(),next.getMonth()+1,0).getDate()))}
+ } else if(rule==="weekly"){
+   next=new Date(base);while(next.getTime()<Date.now())next.setDate(next.getDate()+7);
+ } else if(rule==="daily"){
+   next=new Date(base);while(next.getTime()<Date.now())next.setDate(next.getDate()+1);
+ }
+ return next.getTime();
+}
+function occurrenceToday(e, now=new Date()){
+ const base=new Date(e.date);if(!Number.isFinite(base.getTime()))return null;
+ const rule=e.recurrence||"none";const sameDay=d=>d.getFullYear()===now.getFullYear()&&d.getMonth()===now.getMonth()&&d.getDate()===now.getDate();
+ if(rule==="none")return sameDay(base)?base.getTime():null;
+ let d=new Date(base);d.setFullYear(now.getFullYear());
+ if(rule==="yearly"){
+  if(d.getMonth()!==base.getMonth())d.setDate(0);
+  return sameDay(d)?d.getTime():null;
+ }
+ if(rule==="monthly"){
+  d=new Date(now.getFullYear(),now.getMonth(),1,base.getHours(),base.getMinutes(),base.getSeconds());
+  d.setDate(Math.min(base.getDate(),new Date(now.getFullYear(),now.getMonth()+1,0).getDate()));
+  return sameDay(d)?d.getTime():null;
+ }
+ if(rule==="weekly"||rule==="daily"){
+  const step=rule==="weekly"?7:1;let candidate=new Date(base);candidate.setHours(base.getHours(),base.getMinutes(),base.getSeconds(),0);
+  if(candidate>now)return null;
+  const days=Math.floor((new Date(now.getFullYear(),now.getMonth(),now.getDate())-new Date(candidate.getFullYear(),candidate.getMonth(),candidate.getDate()))/86400000);
+  candidate.setDate(candidate.getDate()+Math.floor(days/step)*step);
+  return sameDay(candidate)?candidate.getTime():null;
+ }
+ return null;
+}
+function isActiveToday(e, now=new Date()){
+ const t=occurrenceToday(e,now);return t!==null&&t<=now.getTime();
+}
+let memoraAudioContext=null;
+function playEventSound(kind){
+ if(!kind||kind==="none")return;
+ try{
+  const Ctx=window.AudioContext||window.webkitAudioContext;if(!Ctx)return;
+  memoraAudioContext=memoraAudioContext||new Ctx();const ctx=memoraAudioContext;
+  const launch=()=>{
+   const t=ctx.currentTime+0.04;
+   const patterns={
+    chime:{notes:[659,784,988,1318,988,1318],step:.19,wave:"sine",dur:.55,bass:[330,0]},
+    party:{notes:[523,659,784,1046,784,1046,1318],step:.15,wave:"triangle",dur:.25,bass:[131,0]},
+    romantic:{notes:[523,659,784,659,587,698,880],step:.27,wave:"sine",dur:.7,bass:[262,0]},
+    magic:{notes:[659,784,988,1175,1568,1175,1760],step:.17,wave:"sine",dur:.6,bass:[220,0]},
+    victory:{notes:[392,523,659,784,988,784,1046],step:.16,wave:"triangle",dur:.34,bass:[196,0]}
+   };
+   const p=patterns[kind];if(!p)return;
+   p.notes.forEach((freq,i)=>{
+    const at=t+i*p.step;
+    [1,2.01].forEach((ratio,j)=>{const osc=ctx.createOscillator(),gain=ctx.createGain(),filter=ctx.createBiquadFilter();osc.type=p.wave;osc.frequency.setValueAtTime(freq*ratio,at);filter.type="lowpass";filter.frequency.setValueAtTime(j?3200:5200,at);gain.gain.setValueAtTime(.0001,at);gain.gain.exponentialRampToValueAtTime((j?.035:.13)/(1+i*.07),at+.018);gain.gain.exponentialRampToValueAtTime(.0001,at+p.dur);osc.connect(filter);filter.connect(gain);gain.connect(ctx.destination);osc.start(at);osc.stop(at+p.dur+.03)});
+   });
+   // Low, soft cinematic swell underneath the melody
+   const bass=ctx.createOscillator(),bg=ctx.createGain(),filter=ctx.createBiquadFilter();bass.type="sine";bass.frequency.setValueAtTime(p.bass[0],t);bass.frequency.exponentialRampToValueAtTime(p.bass[0]*1.5,t+.7);filter.type="lowpass";filter.frequency.value=240;bg.gain.setValueAtTime(.0001,t);bg.gain.exponentialRampToValueAtTime(.075,t+.12);bg.gain.exponentialRampToValueAtTime(.0001,t+1.6);bass.connect(filter);filter.connect(bg);bg.connect(ctx.destination);bass.start(t);bass.stop(t+1.65);
+  };
+  if(ctx.state==="suspended")ctx.resume().then(launch).catch(()=>{});else launch();
+ }catch(err){/* L'effet visuel reste disponible si l'audio est bloqué. */}
+}
+function createAmbienceParticles(effect){
+ const box=$("celebration");box.querySelectorAll(".memora-particle").forEach(n=>n.remove());
+ const glyphs={confetti:["✦","✧","●","◆","✺"],glow:["✦","✧","☼"],hearts:["♥","♡","💗"],stars:["✦","✧","★","⋆"],flash:["✦","✧","⚡"],nature:["✿","❋","❧","✦"]};
+ const colors={confetti:["#f8d98c","#fff1c5","#d8a84e","#f3a5b8"],glow:["#fff2bd","#f7ce75","#ffffff"],hearts:["#ff8bb4","#ffd6e7","#ff477e"],stars:["#ffffff","#c7d4ff","#ffeeb0"],flash:["#ffffff","#fff3c2"],nature:["#b8e7a8","#e3f6c7","#8fd6b0"]};
+ for(let i=0;i<52;i++){const el=document.createElement("span");el.className="memora-particle";el.textContent=glyphs[effect]||glyphs.confetti;el.textContent=el.textContent[Math.floor(Math.random()*el.textContent.length)];el.style.setProperty("--x",Math.random()*100+"%");el.style.setProperty("--y",(35+Math.random()*65)+"%");el.style.setProperty("--size",(10+Math.random()*24)+"px");el.style.setProperty("--dx",(Math.random()*240-120)+"px");el.style.setProperty("--rot",(Math.random()*540-270)+"deg");el.style.setProperty("--dur",(2.4+Math.random()*3.2)+"s");el.style.setProperty("--delay",(Math.random()*.8)+"s");el.style.color=(colors[effect]||colors.confetti)[Math.floor(Math.random()*(colors[effect]||colors.confetti).length)];box.appendChild(el)}
+}
+
+function eventOccurrenceKey(e,timestamp){return `${e.id}:${new Date(timestamp).getFullYear()}-${new Date(timestamp).getMonth()+1}-${new Date(timestamp).getDate()}`}
+function celebrate(e,timestamp){
+ const key=eventOccurrenceKey(e,timestamp);let seen=[];try{seen=JSON.parse(localStorage.getItem("memora-celebrated")||"[]")}catch(_){seen=[]}
+ if(seen.includes(key))return;
+ seen.push(key);try{localStorage.setItem("memora-celebrated",JSON.stringify(seen.slice(-300)))}catch(_){}
+ $("celebrationTitle").textContent=e.name+" ✨";$("celebrationMessage").textContent=e.description||"Le moment que tu attendais est arrivé. Profite pleinement de cette journée !";const celebration=$("celebration");celebration.classList.remove("effect-confetti","effect-glow","effect-hearts","effect-stars","effect-flash","effect-nature");celebration.classList.add("effect-"+(e.visualEffect||"confetti"),"show");createAmbienceParticles(e.visualEffect||"confetti");playEventSound(e.eventSound||"none");
+ if("Notification" in window&&Notification.permission==="granted")try{new Notification("C’est le grand jour !",{body:e.name,tag:key})}catch(_){}
+}
+function checkCelebrations(){
+ const now=new Date();const due=events.map(e=>({e,t:occurrenceToday(e,now)})).filter(x=>x.t!==null&&x.t<=now.getTime()).sort((a,b)=>a.t-b.t);
+ for(const x of due){let seen=[];try{seen=JSON.parse(localStorage.getItem("memora-celebrated")||"[]")}catch(_){}if(!seen.includes(eventOccurrenceKey(x.e,x.t))){selected=x.e.id;render();celebrate(x.e,x.t);break}}
+}
+function dateInputValue(d){const date=d?new Date(d):new Date(Date.now()+86400000);date.setMinutes(date.getMinutes()-date.getTimezoneOffset());return date.toISOString().slice(0,16)}
+function renderList(){
+$("eventList").replaceChildren();
+const ordered=[...events].sort((a,b)=>{const ta=occurrenceDate(a),tb=occurrenceDate(b),now=Date.now(),aPast=ta<now,bPast=tb<now;if(aPast!==bPast)return aPast?1:-1;return aPast?tb-ta:ta-tb});
+ordered.forEach(e=>{const b=document.createElement("button");b.className="pill"+(e.id===selected?" active":"");const symbol=e.category==="voyage"?"✈ ":e.category==="amour"?"♡ ":e.category==="anniversaire"?"🎂 ":e.category==="objectif"?"✦ ":"";b.textContent=symbol+e.name;b.title=e.name;b.onclick=()=>{selected=e.id;render()};$("eventList").append(b)});
+
+}
+function renderAllEvents(){
+ const upcoming=$("upcomingEvents"),past=$("pastEvents");if(!upcoming||!past)return;upcoming.replaceChildren();past.replaceChildren();
+ const ordered=[...events].sort((a,b)=>occurrenceDate(a)-occurrenceDate(b));let n=0,p=0;
+ ordered.forEach(e=>{const isPast=(e.recurrence||"none")==="none"&&safeDate(e.date)<Date.now()&&!isActiveToday(e);const card=document.createElement("button");card.className="event-card";card.type="button";card.dataset.eventId=e.id;
+ const img=document.createElement("img");img.className="event-thumb";img.src=e.image||photos[0];img.alt="";
+ const main=document.createElement("div");main.className="event-card-main";const name=document.createElement("div");name.className="event-card-name";name.textContent=e.name;
+ const date=document.createElement("div");date.className="event-card-date";date.textContent=new Date(occurrenceDate(e)).toLocaleString("fr-FR",{day:"numeric",month:"long",year:"numeric",hour:"2-digit",minute:"2-digit"});main.append(name,date);
+ const rule=e.recurrence||"none", repeatText={yearly:"↻ Chaque année",monthly:"↻ Chaque mois",weekly:"↻ Chaque semaine",daily:"↻ Chaque jour"}[rule];if(repeatText){const repeat=document.createElement("div");repeat.className="event-card-recurrence";repeat.textContent=repeatText;main.append(repeat)}
+ const indicator=document.createElement("span");indicator.className="swipe-delete-indicator";indicator.textContent="🗑";card.append(indicator,img,main);
+ const count=document.createElement("div");count.className="event-card-count";count.textContent=isPast?"Passé":(Math.ceil((occurrenceDate(e)-Date.now())/86400000)+" j");card.append(count);
+ let startX=null,startY=null,swiped=false,moved=false;card.addEventListener("pointerdown",ev=>{startX=ev.clientX;startY=ev.clientY;swiped=false;moved=false;});card.addEventListener("pointermove",ev=>{if(startX===null)return;const dx=ev.clientX-startX,dy=ev.clientY-startY;if(dx>12&&Math.abs(dx)>Math.abs(dy)*1.15){card.classList.add("swiping");card.style.transform=`translateX(${Math.min(dx*.28,30)}px)`;moved=true}else if(dx<0){card.classList.remove("swiping");card.style.transform=""}});card.addEventListener("pointerup",ev=>{if(startX===null)return;const dx=ev.clientX-startX,dy=ev.clientY-startY;startX=null;if(dx>85&&Math.abs(dx)>Math.abs(dy)*1.25){swiped=true;card.style.transform="translateX(40px) scale(.96)";card.style.opacity=".35";setTimeout(()=>{const ok=confirm(`Supprimer « ${e.name} » ?`);if(ok)deleteEvent(e.id);else{card.style.transform="";card.style.opacity="1";card.classList.remove("swiping")}},100)}else{card.style.transform="";card.classList.remove("swiping")}});card.addEventListener("pointercancel",()=>{startX=null;card.style.transform="";card.classList.remove("swiping")});card.addEventListener("click",ev=>{if(swiped||moved){ev.preventDefault();ev.stopPropagation();swiped=false;moved=false;return}selected=e.id;$("listScreen").classList.remove("open");render();window.scrollTo(0,0)});(isPast?past:upcoming).append(card);if(isPast)p++;else n++;
+ });
+ if(!n)upcoming.innerHTML='<p class="helper">Aucun événement à venir. Crée-en un pour commencer.</p>';
+ if(!p){past.innerHTML='<p class="helper">Tes événements passés apparaîtront ici.</p>';$("pastHeading").style.display="none"}else $("pastHeading").style.display="";
+}
+function render(){
+renderList();renderAllEvents();const e=current();
+if(!e){selected=null;$("hero").classList.add("empty-state");$("eventTitle").textContent="Un moment à imaginer.";$("eventSubtitle").textContent="Crée ton premier événement et Memora fera le décompte avec toi.";$("eventSubtitle").style.display="";$("photo").removeAttribute("src");$("dateLabel").textContent="TON HISTOIRE COMMENCE ICI";$("eyebrow").textContent="BIENVENUE SUR MEMORA";$("days").textContent="000";$("hours").textContent="00";$("minutes").textContent="00";$("seconds").textContent="00";return}
+$("hero").classList.remove("empty-state");
+$("eventTitle").textContent=e.name;$("eventSubtitle").textContent=e.description||"";$("eventSubtitle").style.display=e.description&&e.description.trim()?"":"none";const repeatLabels={yearly:"↻ Répété chaque année",monthly:"↻ Répété chaque mois",weekly:"↻ Répété chaque semaine",daily:"↻ Répété chaque jour"};const repeatLabel=repeatLabels[e.recurrence||"none"];$("recurrenceLabel").textContent=repeatLabel||"";$("recurrenceLabel").style.display=repeatLabel?"inline-flex":"none";
+$("photo").src=e.image||photos[0];$("photo").style.setProperty("--zoom",String(e.zoom||1));$("photo").style.setProperty("--pos",(e.posX??50)+"% "+(e.posY??50)+"%");
+$("hero").style.setProperty("--shade",String(typeof e.shade==="number"?e.shade:globalShade));$("hero").style.setProperty("--accent",e.accent||"#e7c99a");
+$("eventTitle").style.fontFamily=e.textStyle==="sans"?' -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif':e.textStyle==="handwritten"?'"Segoe Print","Bradley Hand",cursive':'Georgia,"Times New Roman",serif';
+$("eventTitle").style.fontSize=`clamp(34px, ${(e.titleSize||72)/390*100}vw, ${e.titleSize||72}px)`;
+$("eventTitle").style.letterSpacing=`${Number.isFinite(e.letterSpacing)?e.letterSpacing:-2}px`;
+$("eventTitle").style.color=e.titleColor||"#f4f0e7";
+$("eventSubtitle").style.fontSize=`${e.subtitleSize||15}px`;
+$("eventSubtitle").style.color=e.subtitleColor||"#f1eee7";
+$("dateLabel").textContent=new Date(occurrenceDate(e)).toLocaleDateString("fr-FR",{day:"2-digit",month:"short",year:"numeric"});tick();
+}
+function tick(){
+const e=current();if(!e)return;let diff=occurrenceDate(e)-Date.now();
+if(diff<=0){$("days").textContent="000";$("hours").textContent="00";$("minutes").textContent="00";$("seconds").textContent="00";$("eyebrow").textContent="CE MOMENT EST ARRIVÉ ✨";return}
+$("eyebrow").textContent="A LITTLE CLOSER, EVERY DAY";const d=Math.floor(diff/86400000);diff%=86400000;const h=Math.floor(diff/3600000);diff%=3600000;const m=Math.floor(diff/60000);const s=Math.floor(diff%60000/1000);
+$("days").textContent=String(d).padStart(3,"0");$("hours").textContent=String(h).padStart(2,"0");$("minutes").textContent=String(m).padStart(2,"0");$("seconds").textContent=String(s).padStart(2,"0");
+}
+function deleteEvent(id){
+ const item=events.find(x=>x.id===id);if(!item)return;
+ events=events.filter(x=>x.id!==id);
+ if(selected===id)selected=(nearestUpcoming()||events[0]||{}).id||null;
+ save();render();notify("Événement supprimé");
+}
+function openForm(id){
+editing=id||null;const e=events.find(x=>x.id===id);$("eventForm").reset();pendingImage=null;
+$("formTitle").textContent=e?"Modifier le souvenir":"Un nouveau souvenir";$("visualEffect").value=e?e.visualEffect||"confetti":"confetti";$("eventSound").value=e?e.eventSound||"none":"none";$("name").value=e?e.name:"";$("description").value=e?e.description||"":"";$("category").value=e?e.category||"autre":"autre";$("recurrence").value=e?e.recurrence||"none":"none";
+$("zoom").value=e?e.zoom||1:1;$("zoomValue").textContent=Number($("zoom").value).toFixed(2).replace(/0$/,"")+"×";
+$("darkness").value=e&&typeof e.shade==="number"?e.shade:globalShade;$("darknessValue").textContent=Math.round(Number($("darkness").value)*100)+"%";
+$("accent").value=e&&/^#[0-9a-f]{6}$/i.test(e.accent||"")?e.accent:"#e7c99a";$("textStyle").value=e?e.textStyle||"serif":"serif";
+$("titleSize").value=e?e.titleSize||72:72;$("titleSizeValue").textContent=$("titleSize").value+" px";
+$("subtitleSize").value=e?e.subtitleSize||15:15;$("subtitleSizeValue").textContent=$("subtitleSize").value+" px";
+$("titleColor").value=e&&/^#[0-9a-f]{6}$/i.test(e.titleColor||"")?e.titleColor:"#f4f0e7";
+$("subtitleColor").value=e&&/^#[0-9a-f]{6}$/i.test(e.subtitleColor||"")?e.subtitleColor:"#f1eee7";
+$("letterSpacing").value=e&&Number.isFinite(e.letterSpacing)?e.letterSpacing:-2;$("letterSpacingValue").textContent=$("letterSpacing").value+" px";
+$("date").value=dateInputValue(e?e.date:null);$("remove").hidden=!e;$("photoPreview").src=e&&e.image?e.image:photos[0];
+$("photoPreview").style.objectPosition=e?(e.posX??50)+"% "+(e.posY??50)+"%":"50% 50%";$("photoPreview").style.transform="scale("+($("zoom").value)+")";
+$("modal").classList.add("open");
+}
+async function compressPhoto(file){
+if(!file.type.startsWith("image/"))throw new Error("Choisis un fichier image.");
+return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onerror=()=>reject(new Error("Lecture impossible"));reader.onload=()=>{const img=new Image();img.onerror=()=>reject(new Error("Image impossible à ouvrir"));img.onload=()=>{const max=1200,scale=Math.min(1,max/Math.max(img.width,img.height));const canvas=document.createElement("canvas");canvas.width=Math.max(1,Math.round(img.width*scale));canvas.height=Math.max(1,Math.round(img.height*scale));canvas.getContext("2d").drawImage(img,0,0,canvas.width,canvas.height);resolve(canvas.toDataURL("image/jpeg",.76))};img.src=reader.result};reader.readAsDataURL(file)})
+}
+$("viewAll").onclick=()=>{$("listScreen").classList.add("open");renderAllEvents()};$("closeList").onclick=()=>$("listScreen").classList.remove("open");$("addFromList").onclick=()=>{ $("listScreen").classList.remove("open");openForm(null)};
+$("add").onclick=()=>openForm(null);$("addEmpty").onclick=()=>openForm(null);$("edit").onclick=()=>{if(current())openForm(current().id)};
+$("cancel").onclick=()=>$("modal").classList.remove("open");
+$("modal").addEventListener("click",e=>{if(e.target===$("modal"))$("modal").classList.remove("open")});
+$("eventForm").addEventListener("submit",async e=>{
+e.preventDefault();const name=$("name").value.trim(),date=$("date").value;if(!name||!date||($("recurrence").value==="none"&&safeDate(date)<=Date.now())){alert("Choisis un nom et une date future, ou active une répétition pour une date récurrente.");return}
+const saveBtn=$("saveButton");saveBtn.disabled=true;saveBtn.textContent="Enregistrement…";
+try{
+const old=events.find(x=>x.id===editing);let image=(old&&old.image)||photos[0];
+if(pendingImage)image=pendingImage;else if($("imageFile").files[0])image=await compressPhoto($("imageFile").files[0]);
+const rawShade=Number($("darkness").value),zoom=Number($("zoom").value);
+const item={id:editing||(String(Date.now())+Math.random().toString(16).slice(2)),name,date:new Date(date).toISOString(),description:$("description").value.trim(),category:$("category").value,recurrence:$("recurrence").value,visualEffect:$("visualEffect").value,eventSound:$("eventSound").value,image,zoom,shade:rawShade,accent:$("accent").value,textStyle:$("textStyle").value,titleSize:Number($("titleSize").value),subtitleSize:Number($("subtitleSize").value),titleColor:$("titleColor").value,subtitleColor:$("subtitleColor").value,letterSpacing:Number($("letterSpacing").value),posX:old&&Number.isFinite(old.posX)?old.posX:50,posY:old&&Number.isFinite(old.posY)?old.posY:50};
+const previous=events;events=editing?events.map(x=>x.id===editing?item:x):[...events,item];
+if(!save()){events=previous;return}
+selected=(nearestUpcoming()||item).id;render();$("modal").classList.remove("open");notify("Souvenir enregistré ✨");
+}catch(err){alert("Impossible de traiter cette photo. Essaie avec une autre image ou une image plus légère.")}
+finally{saveBtn.disabled=false;saveBtn.textContent="Enregistrer"}
+});
+$("previewAmbience").onclick=()=>{const effect=$("visualEffect").value,box=$("celebration");box.classList.remove("effect-confetti","effect-glow","effect-hearts","effect-stars","effect-flash","effect-nature");box.classList.add("effect-"+effect,"show");createAmbienceParticles(effect);$("celebrationTitle").textContent="Aperçu de l’effet";$("celebrationMessage").textContent="Voici l’ambiance choisie pour ton événement.";playEventSound($("eventSound").value)};
+$("remove").onclick=()=>{if(!editing||!confirm("Supprimer cet événement ?"))return;const id=editing;deleteEvent(id);$("modal").classList.remove("open")};
+["titleSize","subtitleSize","letterSpacing"].forEach(id=>$(id).addEventListener("input",()=>{$(id+"Value").textContent=$(id).value+(id==="letterSpacing"?" px":" px")}));
+$("imageFile").addEventListener("change",async e=>{const file=e.target.files[0];if(!file)return;try{pendingImage=await compressPhoto(file);$("photoPreview").src=pendingImage;$("photoPreview").style.objectPosition="50% 50%";$("photoPreview").style.transform="scale("+$("zoom").value+")";notify("Photo prête à être enregistrée")}catch(err){alert("Cette photo ne peut pas être utilisée. Essaie une autre image.")}});
+$("zoom").addEventListener("input",()=>{$("zoomValue").textContent=Number($("zoom").value).toFixed(2).replace(/0$/,"")+"×";$("photoPreview").style.transform="scale("+$("zoom").value+")"});
+$("darkness").addEventListener("input",()=>{$("darknessValue").textContent=Math.round(Number($("darkness").value)*100)+"%"});
+$("photoPreview").addEventListener("pointerdown",e=>{pointerStart={x:e.clientX,y:e.clientY,px:Number($("photoPreview").dataset.x||50),py:Number($("photoPreview").dataset.y||50)};$("photoPreview").setPointerCapture?.(e.pointerId)});
+$("photoPreview").addEventListener("pointermove",e=>{if(!pointerStart||!(e.buttons||e.pressure))return;const rect=$("photoPreview").getBoundingClientRect();const x=Math.max(0,Math.min(100,pointerStart.px-(e.clientX-pointerStart.x)/rect.width*55));const y=Math.max(0,Math.min(100,pointerStart.py-(e.clientY-pointerStart.y)/rect.height*55));$("photoPreview").dataset.x=x;$("photoPreview").dataset.y=y;$("photoPreview").style.objectPosition=x+"% "+y+"%"});
+$("photoPreview").addEventListener("pointerup",()=>{if(pointerStart){const old=events.find(x=>x.id===editing);const x=Number($("photoPreview").dataset.x||50),y=Number($("photoPreview").dataset.y||50);$("photoPreview").dataset.x=x;$("photoPreview").dataset.y=y;if(old){old.posX=x;old.posY=y}pointerStart=null}});
+$("openSettings").onclick=()=>{$("globalShade").value=globalShade;$("globalShadeValue").textContent=Math.round(globalShade*100)+"%";$("showSeconds").value=localStorage.getItem("memora-show-seconds")||"yes";$("settingsModal").classList.add("open")};
+$("globalShade").addEventListener("input",()=>{$("globalShadeValue").textContent=Math.round(Number($("globalShade").value)*100)+"%";$("hero").style.setProperty("--shade",String($("globalShade").value))});
+$("enableNotifications").onclick=async()=>{
+ if(!("Notification" in window)){notify("Les notifications ne sont pas prises en charge ici.");$("notificationHelp").textContent="Ce navigateur ne propose pas les notifications web dans ce contexte.";return}
+ try{const permission=await Notification.requestPermission();$("notificationHelp").textContent=permission==="granted"?"Notifications autorisées. Elles pourront s’afficher lorsque Memora est active ; une alerte exacte application fermée n’est pas garantie.":"Autorisation refusée. L’effet visuel dans Memora fonctionnera quand même à la prochaine ouverture.";notify(permission==="granted"?"Notifications autorisées ✨":"Notifications non autorisées")}catch(_){notify("Impossible d’activer les notifications ici.")}
+ };
+ $("closeCelebration").onclick=()=>$("celebration").classList.remove("show");
+ $("celebration").addEventListener("click",ev=>{if(ev.target===$("celebration"))$("celebration").classList.remove("show")});
+ document.addEventListener("visibilitychange",()=>{if(!document.hidden)checkCelebrations()});window.addEventListener("focus",checkCelebrations);
+ $("closeSettings").onclick=()=>{globalShade=Number($("globalShade").value);localStorage.setItem("memora-show-seconds",$("showSeconds").value);$("secondsUnit").style.display=$("showSeconds").value==="no"?"none":"";const e=current();if(e&&typeof e.shade!=="number")e.shade=globalShade;save();$("settingsModal").classList.remove("open");render();notify("Affichage mis à jour")};
+$("settingsModal").addEventListener("click",e=>{if(e.target===$("settingsModal"))$("settingsModal").classList.remove("open")});
+if(localStorage.getItem("memora-show-seconds")==="no")$("secondsUnit").style.display="none";
+render();checkCelebrations();setInterval(()=>{tick();checkCelebrations()},1000);
+})();
+</script>
+</body>
+</html>
