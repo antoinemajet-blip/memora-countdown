@@ -191,6 +191,11 @@ input:focus{border-color:var(--gold)}
 <label for="imageUrl">Photo personnelle (URL facultative)</label>
 
 <input id="imageUrl" type="url" placeholder="https://...">
+  <label for="imageFile">Ou choisir une photo dans mon iPhone</label>
+<input id="imageFile" type="file" accept="image/*">
+<p id="photoStatus" style="font-size:12px;color:#e7c99a;margin-top:8px">
+  Aucune nouvelle photo sélectionnée
+</p>
 
 <div class="form-actions">
 
@@ -314,6 +319,38 @@ $("seconds").textContent=String(s).padStart(2,"0");
 
 }
 
+function compressPhoto(file){
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+
+    reader.onerror=()=>reject(new Error("Lecture de la photo impossible."));
+
+    reader.onload=()=>{
+      const img=new Image();
+
+      img.onerror=()=>reject(new Error("Image impossible à ouvrir."));
+
+      img.onload=()=>{
+        const max=1400;
+        const scale=Math.min(1,max/Math.max(img.width,img.height));
+        const canvas=document.createElement("canvas");
+
+        canvas.width=Math.round(img.width*scale);
+        canvas.height=Math.round(img.height*scale);
+
+        const ctx=canvas.getContext("2d");
+        ctx.drawImage(img,0,0,canvas.width,canvas.height);
+
+        resolve(canvas.toDataURL("image/jpeg",0.78));
+      };
+
+      img.src=reader.result;
+    };
+
+    reader.readAsDataURL(file);
+  });
+}
+  
 function openForm(id){
 
 editing=id||null;const e=events.find(x=>x.id===id);
@@ -326,7 +363,9 @@ $("name").value=e?e.name:"";
 
 $("description").value=e?e.description||"":"";
 
-$("imageUrl").value=e&&e.image&&!photos.includes(e.image)?e.image:"";
+$("imageUrl").value=e&&e.image&&!photos.includes(e.image)&&e.image.startsWith("http")?e.image:"";
+$("imageFile").value="";
+$("photoStatus").textContent="Aucune nouvelle photo sélectionnée";
 
 const date=e?new Date(e.date):new Date(Date.now()+86400000);
 
@@ -348,25 +387,72 @@ $("cancel").onclick=()=>$("modal").classList.remove("open");
 
 $("modal").addEventListener("click",e=>{if(e.target===$("modal"))$("modal").classList.remove("open")});
 
-$("eventForm").onsubmit=e=>{
+$("eventForm").onsubmit=async e=>{
+  e.preventDefault();
 
-e.preventDefault();
+  const name=$("name").value.trim();
+  const date=$("date").value;
+  const file=$("imageFile").files[0];
 
-const name=$("name").value.trim();const date=$("date").value;
+  if(!name||!date||safeDate(date)<=Date.now()){
+    alert("Choisis un nom et une date future.");
+    return;
+  }
 
-if(!name||!date||safeDate(date)<=Date.now()){alert("Choisis un nom et une date future.");return}
+  const old=events.find(x=>x.id===editing);
+  const url=$("imageUrl").value.trim();
 
-const old=events.find(x=>x.id===editing);
+  let image=(url.startsWith("https://")||url.startsWith("http://"))
+    ?url
+    :(old&&old.image)||photos[0];
 
-const image=$("imageUrl").value.trim()||(old&&old.image)||photos[0];
+  try{
+    if(file){
+      if(!file.type.startsWith("image/")){
+        alert("Choisis un fichier image.");
+        return;
+      }
 
-const item={id:editing||String(Date.now())+Math.random().toString(16).slice(2),name,date:new Date(date).toISOString(),description:$("description").value.trim(),image};
+      $("photoStatus").textContent="Préparation de la photo…";
+      image=await compressPhoto(file);
+    }
 
-if(editing)events=events.map(x=>x.id===editing?item:x);else events.push(item);
+    const item={
+      id:editing||String(Date.now())+Math.random().toString(16).slice(2),
+      name,
+      date:new Date(date).toISOString(),
+      description:$("description").value.trim(),
+      image
+    };
 
-selected=item.id;save();render();$("modal").classList.remove("open");
+    const previous=events;
+    events=editing
+      ?events.map(x=>x.id===editing?item:x)
+      :[...events,item];
 
-};
+    try{
+      save();
+
+      // Vérifie que le navigateur a bien conservé les événements.
+      const stored=JSON.parse(localStorage.getItem("memora-events")||"[]");
+
+      if(!stored.some(x=>x.id===item.id)){
+        throw new Error("Sauvegarde impossible");
+      }
+    }catch(err){
+      events=previous;
+      alert("La sauvegarde a échoué. Essaie avec une photo plus petite ou une autre image.");
+      return;
+    }
+
+    selected=item.id;
+    render();
+    $("modal").classList.remove("open");
+
+  }catch(err){
+    alert("Impossible de traiter cette photo. Essaie avec une autre image.");
+  }
+};;
 
 $("remove").onclick=()=>{
 
