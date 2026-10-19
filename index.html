@@ -68,6 +68,8 @@ select option{background:#1c211e;color:white}
 .range-value{text-align:right;font-size:11px;color:#cfc7b8}
 .toast{position:fixed;left:18px;right:18px;bottom:calc(env(safe-area-inset-bottom) + 18px);z-index:20;text-align:center;background:#f4f0e7;color:#20231f;padding:12px 16px;border-radius:15px;font-size:13px;box-shadow:0 8px 30px #0006;display:none}
 .toast.show{display:block}
+.list-screen{position:fixed;inset:0;z-index:8;display:none;overflow:auto;background:#101510;padding:calc(env(safe-area-inset-top) + 18px) 18px calc(env(safe-area-inset-bottom) + 28px)}
+.list-screen.open{display:block}.list-inner{max-width:720px;margin:0 auto}.list-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}.list-head h2{font:32px Georgia,serif;margin:0}.event-card{display:flex;align-items:center;gap:12px;width:100%;text-align:left;color:var(--cream);background:#ffffff0d;border:1px solid #ffffff20;border-radius:17px;padding:10px;margin:10px 0}.event-thumb{width:76px;height:76px;flex:0 0 76px;object-fit:cover;border-radius:12px;background:#28312c}.event-card-main{min-width:0;flex:1}.event-card-name{font-weight:650;overflow-wrap:anywhere}.event-card-date{font-size:12px;color:#c4c4b9;margin-top:5px}.event-card-count{font-size:12px;color:var(--gold);white-space:nowrap}.list-section{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin:22px 0 8px}.nav-row{display:flex;gap:9px;margin:18px 0 4px}.nav-row button{flex:1}.home-button{border:1px solid #ffffff40;border-radius:28px;padding:13px 16px;background:#ffffff12;color:white;font-weight:600}
 @media(min-width:650px){.content{padding-left:44px;padding-right:44px}.number{font-size:48px}.intro{padding-top:80px}.hero{min-height:100svh}}
 @media(max-height:700px){.intro{padding-top:35px}.timer{margin:22px 0 18px}.content{padding-top:calc(env(safe-area-inset-top) + 12px);padding-bottom:calc(env(safe-area-inset-bottom) + 14px)}}
 </style>
@@ -97,7 +99,8 @@ select option{background:#1c211e;color:white}
 <section class="bottom">
 <div class="event-row" id="eventList"></div>
 <div class="actions">
-<button class="primary" id="add">＋ Nouvel événement</button>
+<button class="primary" id="viewAll">☷ Tous mes événements</button>
+<button class="secondary" id="add">＋</button>
 <button class="secondary" id="edit" aria-label="Modifier l’événement" title="Modifier">✎</button>
 </div>
 <div class="footer"><span>Make time meaningful</span><span id="dateLabel">YOUR STORY, YOUR TIME</span></div>
@@ -105,6 +108,15 @@ select option{background:#1c211e;color:white}
 </div>
 </main>
 
+<div class="list-screen" id="listScreen" aria-label="Tous mes événements">
+ <div class="list-inner">
+  <div class="list-head"><h2>Mes événements</h2><button class="round" id="closeList" aria-label="Retour à l’accueil">✕</button></div>
+  <p class="helper">Tous tes moments, classés du plus proche au plus lointain.</p>
+  <div class="nav-row"><button class="primary" id="addFromList">＋ Créer un événement</button></div>
+  <div class="list-section">À venir</div><div id="upcomingEvents"></div>
+  <div class="list-section" id="pastHeading">Événements passés</div><div id="pastEvents"></div>
+ </div>
+</div>
 <div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="formTitle">
 <form class="sheet" id="eventForm">
 <h2 id="formTitle">Un nouveau souvenir</h2>
@@ -180,7 +192,8 @@ try{const saved=JSON.parse(localStorage.getItem("memora-events")||"null");events
 if(!Array.isArray(events)||!events.length)events=defaultEvents;
 // Keep the original localStorage key and tolerate older event objects.
 events=events.map(e=>({...e,zoom:Number(e.zoom)||1,shade:typeof e.shade==="number"?e.shade:.42,accent:e.accent||"#e7c99a",textStyle:e.textStyle||"serif",titleSize:Number(e.titleSize)||72,subtitleSize:Number(e.subtitleSize)||15,titleColor:e.titleColor||"#f4f0e7",subtitleColor:e.subtitleColor||"#f1eee7",letterSpacing:Number.isFinite(e.letterSpacing)?e.letterSpacing:-2,posX:Number.isFinite(e.posX)?e.posX:50,posY:Number.isFinite(e.posY)?e.posY:50,category:e.category||"autre"}));
-let selected=events[0].id,editing=null,photoIndex=0,pendingImage=null,pointerStart=null,toastTimer=null,globalShade=.42;
+const nearestUpcoming=()=>[...events].filter(e=>safeDate(e.date)>=Date.now()).sort((a,b)=>safeDate(a.date)-safeDate(b.date))[0];
+let selected=(nearestUpcoming()||events[0]).id,editing=null,photoIndex=0,pendingImage=null,pointerStart=null,toastTimer=null,globalShade=.42;
 function notify(msg){$("toast").textContent=msg;$("toast").classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(()=>$("toast").classList.remove("show"),2600)}
 function save(){try{localStorage.setItem("memora-events",JSON.stringify(events));return true}catch(e){notify("Stockage saturé : essaie une photo plus légère.");return false}}
 function current(){return events.find(e=>e.id===selected)||events[0]}
@@ -192,8 +205,21 @@ const ordered=[...events].sort((a,b)=>{const ta=safeDate(a.date),tb=safeDate(b.d
 ordered.forEach(e=>{const b=document.createElement("button");b.className="pill"+(e.id===selected?" active":"");const symbol=e.category==="voyage"?"✈ ":e.category==="amour"?"♡ ":e.category==="anniversaire"?"🎂 ":e.category==="objectif"?"✦ ":"";b.textContent=symbol+e.name;b.title=e.name;b.onclick=()=>{selected=e.id;render()};$("eventList").append(b)});
 if(!events.length){const d=document.createElement("div");d.className="empty";d.textContent="Ajoute ton premier événement pour commencer."; $("eventList").append(d)}
 }
+function renderAllEvents(){
+ const upcoming=$("upcomingEvents"),past=$("pastEvents");if(!upcoming||!past)return;upcoming.replaceChildren();past.replaceChildren();
+ const ordered=[...events].sort((a,b)=>safeDate(a.date)-safeDate(b.date));let n=0,p=0;
+ ordered.forEach(e=>{const isPast=safeDate(e.date)<Date.now();const card=document.createElement("button");card.className="event-card";card.type="button";
+ const img=document.createElement("img");img.className="event-thumb";img.src=e.image||photos[0];img.alt="";
+ const main=document.createElement("div");main.className="event-card-main";const name=document.createElement("div");name.className="event-card-name";name.textContent=e.name;
+ const date=document.createElement("div");date.className="event-card-date";date.textContent=new Date(safeDate(e.date)).toLocaleString("fr-FR",{day:"numeric",month:"long",year:"numeric",hour:"2-digit",minute:"2-digit"});main.append(name,date);
+ const count=document.createElement("div");count.className="event-card-count";count.textContent=isPast?"Passé":(Math.ceil((safeDate(e.date)-Date.now())/86400000)+" j");card.append(img,main,count);
+ card.onclick=()=>{selected=e.id;$("listScreen").classList.remove("open");render();window.scrollTo(0,0)};(isPast?past:upcoming).append(card);if(isPast)p++;else n++;
+ });
+ if(!n)upcoming.innerHTML='<p class="helper">Aucun événement à venir. Crée-en un pour commencer.</p>';
+ if(!p){past.innerHTML='<p class="helper">Tes événements passés apparaîtront ici.</p>';$("pastHeading").style.display="none"}else $("pastHeading").style.display="";
+}
 function render(){
-renderList();const e=current();if(!e)return;
+renderList();renderAllEvents();const e=current();if(!e)return;
 $("eventTitle").textContent=e.name;$("eventSubtitle").textContent=e.description||"";$("eventSubtitle").style.display=e.description&&e.description.trim()?"":"none";
 $("photo").src=e.image||photos[0];$("photo").style.setProperty("--zoom",String(e.zoom||1));$("photo").style.setProperty("--pos",(e.posX??50)+"% "+(e.posY??50)+"%");
 $("hero").style.setProperty("--shade",String(typeof e.shade==="number"?e.shade:globalShade));$("hero").style.setProperty("--accent",e.accent||"#e7c99a");
@@ -230,6 +256,7 @@ async function compressPhoto(file){
 if(!file.type.startsWith("image/"))throw new Error("Choisis un fichier image.");
 return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onerror=()=>reject(new Error("Lecture impossible"));reader.onload=()=>{const img=new Image();img.onerror=()=>reject(new Error("Image impossible à ouvrir"));img.onload=()=>{const max=1200,scale=Math.min(1,max/Math.max(img.width,img.height));const canvas=document.createElement("canvas");canvas.width=Math.max(1,Math.round(img.width*scale));canvas.height=Math.max(1,Math.round(img.height*scale));canvas.getContext("2d").drawImage(img,0,0,canvas.width,canvas.height);resolve(canvas.toDataURL("image/jpeg",.76))};img.src=reader.result};reader.readAsDataURL(file)})
 }
+$("viewAll").onclick=()=>{$("listScreen").classList.add("open");renderAllEvents()};$("closeList").onclick=()=>$("listScreen").classList.remove("open");$("addFromList").onclick=()=>{ $("listScreen").classList.remove("open");openForm(null)};
 $("add").onclick=()=>openForm(null);$("edit").onclick=()=>{if(current())openForm(current().id)};
 $("cancel").onclick=()=>$("modal").classList.remove("open");
 $("modal").addEventListener("click",e=>{if(e.target===$("modal"))$("modal").classList.remove("open")});
@@ -243,7 +270,7 @@ const rawShade=Number($("darkness").value),zoom=Number($("zoom").value);
 const item={id:editing||(String(Date.now())+Math.random().toString(16).slice(2)),name,date:new Date(date).toISOString(),description:$("description").value.trim(),category:$("category").value,image,zoom,shade:rawShade,accent:$("accent").value,textStyle:$("textStyle").value,titleSize:Number($("titleSize").value),subtitleSize:Number($("subtitleSize").value),titleColor:$("titleColor").value,subtitleColor:$("subtitleColor").value,letterSpacing:Number($("letterSpacing").value),posX:old&&Number.isFinite(old.posX)?old.posX:50,posY:old&&Number.isFinite(old.posY)?old.posY:50};
 const previous=events;events=editing?events.map(x=>x.id===editing?item:x):[...events,item];
 if(!save()){events=previous;return}
-selected=item.id;render();$("modal").classList.remove("open");notify("Souvenir enregistré ✨");
+selected=(nearestUpcoming()||item).id;render();$("modal").classList.remove("open");notify("Souvenir enregistré ✨");
 }catch(err){alert("Impossible de traiter cette photo. Essaie avec une autre image ou une image plus légère.")}
 finally{saveBtn.disabled=false;saveBtn.textContent="Enregistrer"}
 });
