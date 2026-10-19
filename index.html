@@ -24,8 +24,8 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .round{border:1px solid #ffffff55;background:#ffffff18;color:white;width:42px;height:42px;border-radius:50%;font-size:19px;backdrop-filter:blur(14px);display:grid;place-items:center}
 .intro{margin-top:auto;padding-top:65px}
 .eyebrow{font-size:10px;letter-spacing:2.8px;text-transform:uppercase;color:var(--accent);margin-bottom:14px;font-weight:650;text-shadow:0 1px 12px #0008}
-h1{font-family:Georgia,"Times New Roman",serif;font-size:clamp(43px,12vw,76px);line-height:.98;letter-spacing:-2px;font-weight:400;margin:0 0 15px;overflow-wrap:anywhere;text-shadow:0 2px 24px #0006;white-space:pre-line}
-.subtitle{font-size:15px;color:#f1eee7;line-height:1.5;margin:0;max-width:38ch;text-shadow:0 1px 10px #0008}
+h1{font-family:Georgia,"Times New Roman",serif;font-size:clamp(43px,12vw,76px);line-height:.98;letter-spacing:-2px;font-weight:400;margin:0 0 15px;overflow-wrap:anywhere;text-shadow:0 2px 24px #0006;white-space:pre-line;color:var(--title-color,#f4f0e7)}
+.subtitle{font-size:15px;color:var(--subtitle-color,#f1eee7);line-height:1.5;margin:0;max-width:38ch;text-shadow:0 1px 10px #0008}
 .timer{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin:32px 0 26px;max-width:580px}
 .unit{text-align:center;border-right:1px solid #ffffff38;min-width:0}
 .unit:last-child{border:0}
@@ -113,12 +113,10 @@ select option{background:#1c211e;color:white}
 <input id="name" maxlength="70" placeholder="Ex. Nos prochaines vacances" required>
 <label for="date">Date et heure</label>
 <input id="date" type="datetime-local" required>
-<label for="description">Petite phrase (facultatif)</label>
-<input id="description" maxlength="120" placeholder="Ex. Le début d'une belle aventure">
+<label for="description">Commentaire (facultatif)</label>
+<textarea id="description" maxlength="300" rows="3" placeholder="Quelques mots sur ce moment…"></textarea>
 <label for="category">Catégorie</label>
-<select id="category">
-<option value="voyage">✈️ Voyage</option><option value="amour">♡ À deux</option><option value="anniversaire">🎂 Anniversaire</option><option value="objectif">✦ Objectif</option><option value="autre" selected>✧ Autre moment</option>
-</select>
+<select id="category"><option value="voyage">✈️ Voyage</option><option value="amour">♡ À deux</option><option value="anniversaire">🎂 Anniversaire</option><option value="objectif">✦ Objectif</option><option value="autre" selected>✧ Autre moment</option></select>
 <div class="section-title">Photo & cadrage</div>
 <label for="imageFile">Choisir une photo dans mon iPhone</label>
 <input id="imageFile" type="file" accept="image/*">
@@ -132,8 +130,18 @@ select option{background:#1c211e;color:white}
 <div class="section-title">Style</div>
 <div class="grid2">
 <div><label for="accent">Couleur d’accent</label><input id="accent" type="color" value="#e7c99a"></div>
-<div><label for="textStyle">Style du titre</label><select id="textStyle"><option value="serif">Élégant (sérif)</option><option value="sans">Moderne</option></select></div>
+<div><label for="textStyle">Style du titre</label><select id="textStyle"><option value="serif">Élégant (sérif)</option><option value="sans">Moderne</option><option value="handwritten">Manuscrit</option></select></div>
 </div>
+<div class="grid2">
+<div><label for="titleSize">Taille du titre</label><div class="range-row"><input id="titleSize" type="range" min="40" max="88" step="1" value="72"><span class="range-value" id="titleSizeValue">72 px</span></div></div>
+<div><label for="subtitleSize">Taille du sous-titre</label><div class="range-row"><input id="subtitleSize" type="range" min="12" max="24" step="1" value="15"><span class="range-value" id="subtitleSizeValue">15 px</span></div></div>
+</div>
+<div class="grid2">
+<div><label for="titleColor">Couleur du titre</label><input id="titleColor" type="color" value="#f4f0e7"></div>
+<div><label for="subtitleColor">Couleur du sous-titre</label><input id="subtitleColor" type="color" value="#f1eee7"></div>
+</div>
+<label for="letterSpacing">Espacement des lettres du titre</label>
+<div class="range-row"><input id="letterSpacing" type="range" min="-3" max="3" step=".25" value="-2"><span class="range-value" id="letterSpacingValue">-2 px</span></div>
 <div class="form-actions">
 <button type="button" class="secondary" id="cancel">Annuler</button>
 <button type="submit" class="primary" id="saveButton">Enregistrer</button>
@@ -166,12 +174,12 @@ const photos=[
 "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1800&q=85",
 "https://images.unsplash.com/photo-1470252649378-9c29740c9fa8?auto=format&fit=crop&w=1800&q=85"
 ];
-const defaultEvents=[{id:"welcome",name:"Your next adventure.",date:new Date(Date.now()+30*86400000).toISOString(),description:"Chaque grand moment commence par l'attente.",image:photos[0],category:"voyage",zoom:1,shade:.42,accent:"#e7c99a",textStyle:"serif",posX:50,posY:50}];
+const defaultEvents=[{id:"welcome",name:"Your next adventure.",date:new Date(Date.now()+30*86400000).toISOString(),description:"Chaque grand moment commence par l'attente.",image:photos[0],category:"voyage",zoom:1,shade:.42,accent:"#e7c99a",textStyle:"serif",titleSize:72,subtitleSize:15,titleColor:"#f4f0e7",subtitleColor:"#f1eee7",letterSpacing:-2,posX:50,posY:50}];
 let events=[];
 try{const saved=JSON.parse(localStorage.getItem("memora-events")||"null");events=Array.isArray(saved)&&saved.length?saved:defaultEvents}catch(e){events=defaultEvents}
 if(!Array.isArray(events)||!events.length)events=defaultEvents;
 // Keep the original localStorage key and tolerate older event objects.
-events=events.map(e=>({...e,zoom:Number(e.zoom)||1,shade:typeof e.shade==="number"?e.shade:.42,accent:e.accent||"#e7c99a",textStyle:e.textStyle||"serif",posX:Number.isFinite(e.posX)?e.posX:50,posY:Number.isFinite(e.posY)?e.posY:50,category:e.category||"autre"}));
+events=events.map(e=>({...e,zoom:Number(e.zoom)||1,shade:typeof e.shade==="number"?e.shade:.42,accent:e.accent||"#e7c99a",textStyle:e.textStyle||"serif",titleSize:Number(e.titleSize)||72,subtitleSize:Number(e.subtitleSize)||15,titleColor:e.titleColor||"#f4f0e7",subtitleColor:e.subtitleColor||"#f1eee7",letterSpacing:Number.isFinite(e.letterSpacing)?e.letterSpacing:-2,posX:Number.isFinite(e.posX)?e.posX:50,posY:Number.isFinite(e.posY)?e.posY:50,category:e.category||"autre"}));
 let selected=events[0].id,editing=null,photoIndex=0,pendingImage=null,pointerStart=null,toastTimer=null,globalShade=.42;
 function notify(msg){$("toast").textContent=msg;$("toast").classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(()=>$("toast").classList.remove("show"),2600)}
 function save(){try{localStorage.setItem("memora-events",JSON.stringify(events));return true}catch(e){notify("Stockage saturé : essaie une photo plus légère.");return false}}
@@ -180,15 +188,21 @@ function safeDate(d){const t=new Date(d).getTime();return Number.isFinite(t)?t:D
 function dateInputValue(d){const date=d?new Date(d):new Date(Date.now()+86400000);date.setMinutes(date.getMinutes()-date.getTimezoneOffset());return date.toISOString().slice(0,16)}
 function renderList(){
 $("eventList").replaceChildren();
-events.forEach(e=>{const b=document.createElement("button");b.className="pill"+(e.id===selected?" active":"");b.textContent=(e.category==="voyage"?"✈ ":e.category==="amour"?"♡ ":e.category==="anniversaire"?"🎂 ":e.category==="objectif"?"✦ ":"")+e.name;b.title=e.name;b.onclick=()=>{selected=e.id;render()};$("eventList").append(b)});
+const ordered=[...events].sort((a,b)=>{const ta=safeDate(a.date),tb=safeDate(b.date),now=Date.now(),aPast=ta<now,bPast=tb<now;if(aPast!==bPast)return aPast?1:-1;return aPast?tb-ta:ta-tb});
+ordered.forEach(e=>{const b=document.createElement("button");b.className="pill"+(e.id===selected?" active":"");const symbol=e.category==="voyage"?"✈ ":e.category==="amour"?"♡ ":e.category==="anniversaire"?"🎂 ":e.category==="objectif"?"✦ ":"";b.textContent=symbol+e.name;b.title=e.name;b.onclick=()=>{selected=e.id;render()};$("eventList").append(b)});
 if(!events.length){const d=document.createElement("div");d.className="empty";d.textContent="Ajoute ton premier événement pour commencer."; $("eventList").append(d)}
 }
 function render(){
 renderList();const e=current();if(!e)return;
-$("eventTitle").textContent=e.name;$("eventSubtitle").textContent=e.description||"Chaque grand moment commence par l'attente.";
+$("eventTitle").textContent=e.name;$("eventSubtitle").textContent=e.description||"";$("eventSubtitle").style.display=e.description&&e.description.trim()?"":"none";
 $("photo").src=e.image||photos[0];$("photo").style.setProperty("--zoom",String(e.zoom||1));$("photo").style.setProperty("--pos",(e.posX??50)+"% "+(e.posY??50)+"%");
 $("hero").style.setProperty("--shade",String(typeof e.shade==="number"?e.shade:globalShade));$("hero").style.setProperty("--accent",e.accent||"#e7c99a");
-$("eventTitle").style.fontFamily=e.textStyle==="sans"?' -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif':'Georgia,"Times New Roman",serif';
+$("eventTitle").style.fontFamily=e.textStyle==="sans"?' -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif':e.textStyle==="handwritten"?'"Segoe Print","Bradley Hand",cursive':'Georgia,"Times New Roman",serif';
+$("eventTitle").style.fontSize=`clamp(34px, ${(e.titleSize||72)/390*100}vw, ${e.titleSize||72}px)`;
+$("eventTitle").style.letterSpacing=`${Number.isFinite(e.letterSpacing)?e.letterSpacing:-2}px`;
+$("eventTitle").style.color=e.titleColor||"#f4f0e7";
+$("eventSubtitle").style.fontSize=`${e.subtitleSize||15}px`;
+$("eventSubtitle").style.color=e.subtitleColor||"#f1eee7";
 $("dateLabel").textContent=new Date(safeDate(e.date)).toLocaleDateString("fr-FR",{day:"2-digit",month:"short",year:"numeric"});tick();
 }
 function tick(){
@@ -199,10 +213,15 @@ $("days").textContent=String(d).padStart(3,"0");$("hours").textContent=String(h)
 }
 function openForm(id){
 editing=id||null;const e=events.find(x=>x.id===id);$("eventForm").reset();pendingImage=null;
-$("formTitle").textContent=e?"Modifier le souvenir":"Un nouveau souvenir";$("name").value=e?e.name:"";$("description").value=e?e.description||"":"";
-$("category").value=e?e.category||"autre":"autre";$("zoom").value=e?e.zoom||1:1;$("zoomValue").textContent=Number($("zoom").value).toFixed(2).replace(/0$/,"")+"×";
+$("formTitle").textContent=e?"Modifier le souvenir":"Un nouveau souvenir";$("name").value=e?e.name:"";$("description").value=e?e.description||"":"";$("category").value=e?e.category||"autre":"autre";
+$("zoom").value=e?e.zoom||1:1;$("zoomValue").textContent=Number($("zoom").value).toFixed(2).replace(/0$/,"")+"×";
 $("darkness").value=e&&typeof e.shade==="number"?e.shade:globalShade;$("darknessValue").textContent=Math.round(Number($("darkness").value)*100)+"%";
 $("accent").value=e&&/^#[0-9a-f]{6}$/i.test(e.accent||"")?e.accent:"#e7c99a";$("textStyle").value=e?e.textStyle||"serif":"serif";
+$("titleSize").value=e?e.titleSize||72:72;$("titleSizeValue").textContent=$("titleSize").value+" px";
+$("subtitleSize").value=e?e.subtitleSize||15:15;$("subtitleSizeValue").textContent=$("subtitleSize").value+" px";
+$("titleColor").value=e&&/^#[0-9a-f]{6}$/i.test(e.titleColor||"")?e.titleColor:"#f4f0e7";
+$("subtitleColor").value=e&&/^#[0-9a-f]{6}$/i.test(e.subtitleColor||"")?e.subtitleColor:"#f1eee7";
+$("letterSpacing").value=e&&Number.isFinite(e.letterSpacing)?e.letterSpacing:-2;$("letterSpacingValue").textContent=$("letterSpacing").value+" px";
 $("date").value=dateInputValue(e?e.date:null);$("remove").hidden=!e;$("photoPreview").src=e&&e.image?e.image:photos[0];
 $("photoPreview").style.objectPosition=e?(e.posX??50)+"% "+(e.posY??50)+"%":"50% 50%";$("photoPreview").style.transform="scale("+($("zoom").value)+")";
 $("modal").classList.add("open");
@@ -221,7 +240,7 @@ try{
 const old=events.find(x=>x.id===editing);let image=(old&&old.image)||photos[0];
 if(pendingImage)image=pendingImage;else if($("imageFile").files[0])image=await compressPhoto($("imageFile").files[0]);
 const rawShade=Number($("darkness").value),zoom=Number($("zoom").value);
-const item={id:editing||(String(Date.now())+Math.random().toString(16).slice(2)),name,date:new Date(date).toISOString(),description:$("description").value.trim(),image,category:$("category").value,zoom,shade:rawShade,accent:$("accent").value,textStyle:$("textStyle").value,posX:old&&Number.isFinite(old.posX)?old.posX:50,posY:old&&Number.isFinite(old.posY)?old.posY:50};
+const item={id:editing||(String(Date.now())+Math.random().toString(16).slice(2)),name,date:new Date(date).toISOString(),description:$("description").value.trim(),category:$("category").value,image,zoom,shade:rawShade,accent:$("accent").value,textStyle:$("textStyle").value,titleSize:Number($("titleSize").value),subtitleSize:Number($("subtitleSize").value),titleColor:$("titleColor").value,subtitleColor:$("subtitleColor").value,letterSpacing:Number($("letterSpacing").value),posX:old&&Number.isFinite(old.posX)?old.posX:50,posY:old&&Number.isFinite(old.posY)?old.posY:50};
 const previous=events;events=editing?events.map(x=>x.id===editing?item:x):[...events,item];
 if(!save()){events=previous;return}
 selected=item.id;render();$("modal").classList.remove("open");notify("Souvenir enregistré ✨");
@@ -229,6 +248,7 @@ selected=item.id;render();$("modal").classList.remove("open");notify("Souvenir e
 finally{saveBtn.disabled=false;saveBtn.textContent="Enregistrer"}
 });
 $("remove").onclick=()=>{if(!editing||!confirm("Supprimer cet événement ?"))return;events=events.filter(x=>x.id!==editing);if(!events.length){events=[{...defaultEvents[0],id:String(Date.now())}]}selected=events[0].id;save();render();$("modal").classList.remove("open");notify("Événement supprimé")};
+["titleSize","subtitleSize","letterSpacing"].forEach(id=>$(id).addEventListener("input",()=>{$(id+"Value").textContent=$(id).value+(id==="letterSpacing"?" px":" px")}));
 $("imageFile").addEventListener("change",async e=>{const file=e.target.files[0];if(!file)return;try{pendingImage=await compressPhoto(file);$("photoPreview").src=pendingImage;$("photoPreview").style.objectPosition="50% 50%";$("photoPreview").style.transform="scale("+$("zoom").value+")";notify("Photo prête à être enregistrée")}catch(err){alert("Cette photo ne peut pas être utilisée. Essaie une autre image.")}});
 $("zoom").addEventListener("input",()=>{$("zoomValue").textContent=Number($("zoom").value).toFixed(2).replace(/0$/,"")+"×";$("photoPreview").style.transform="scale("+$("zoom").value+")"});
 $("darkness").addEventListener("input",()=>{$("darknessValue").textContent=Math.round(Number($("darkness").value)*100)+"%"});
