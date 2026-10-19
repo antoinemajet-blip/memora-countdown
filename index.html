@@ -141,6 +141,9 @@ select option{background:#1c211e;color:white}
 <input id="name" maxlength="70" placeholder="Ex. Nos prochaines vacances" required>
 <label for="date">Date et heure</label>
 <input id="date" type="datetime-local" required>
+<label for="recurrence">Répétition</label>
+<select id="recurrence"><option value="none">Aucune répétition</option><option value="yearly">Chaque année</option><option value="monthly">Chaque mois</option><option value="weekly">Chaque semaine</option><option value="daily">Chaque jour</option></select>
+<div class="helper">Pour Noël ou un anniversaire, choisis « Chaque année » : Memora calculera automatiquement la prochaine date.</div>
 <label for="description">Commentaire (facultatif)</label>
 <textarea id="description" maxlength="300" rows="3" placeholder="Quelques mots sur ce moment…"></textarea>
 <label for="category">Catégorie</label>
@@ -207,27 +210,47 @@ try{const saved=JSON.parse(localStorage.getItem("memora-events")||"null");events
 if(!Array.isArray(events))events=[];
 // Keep the original localStorage key and tolerate older event objects.
 events=events.map(e=>({...e,zoom:Number(e.zoom)||1,shade:typeof e.shade==="number"?e.shade:.42,accent:e.accent||"#e7c99a",textStyle:e.textStyle||"serif",titleSize:Number(e.titleSize)||72,subtitleSize:Number(e.subtitleSize)||15,titleColor:e.titleColor||"#f4f0e7",subtitleColor:e.subtitleColor||"#f1eee7",letterSpacing:Number.isFinite(e.letterSpacing)?e.letterSpacing:-2,posX:Number.isFinite(e.posX)?e.posX:50,posY:Number.isFinite(e.posY)?e.posY:50,category:e.category||"autre"}));
-const nearestUpcoming=()=>[...events].filter(e=>safeDate(e.date)>=Date.now()).sort((a,b)=>safeDate(a.date)-safeDate(b.date))[0];
+const nearestUpcoming=()=>[...events].filter(e=>occurrenceDate(e)>=Date.now()).sort((a,b)=>occurrenceDate(a)-occurrenceDate(b))[0];
 let selected=(nearestUpcoming()||events[0]||{}).id||null,editing=null,photoIndex=0,pendingImage=null,pointerStart=null,toastTimer=null,globalShade=.42;
 function notify(msg){$("toast").textContent=msg;$("toast").classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(()=>$("toast").classList.remove("show"),2600)}
 function save(){try{localStorage.setItem("memora-events",JSON.stringify(events));return true}catch(e){notify("Stockage saturé : essaie une photo plus légère.");return false}}
 function current(){return events.find(e=>e.id===selected)||nearestUpcoming()||events[0]||null}
 function safeDate(d){const t=new Date(d).getTime();return Number.isFinite(t)?t:Date.now()}
+function occurrenceDate(e){
+ const base=new Date(e.date);if(!Number.isFinite(base.getTime()))return Date.now();
+ const rule=e.recurrence||"none";if(rule==="none")return base.getTime();
+ const now=new Date();let next=new Date(base);
+ if(rule==="yearly"){
+   next.setFullYear(now.getFullYear());
+   // Handle Feb. 29 safely in non-leap years.
+   if(next.getMonth()!==base.getMonth()){next.setDate(0)}
+   if(next.getTime()<Date.now()){next=new Date(base);next.setFullYear(now.getFullYear()+1);if(next.getMonth()!==base.getMonth())next.setDate(0)}
+ } else if(rule==="monthly"){
+   const day=base.getDate();next=new Date(now.getFullYear(),now.getMonth(),1,base.getHours(),base.getMinutes(),base.getSeconds());
+   next.setDate(Math.min(day,new Date(next.getFullYear(),next.getMonth()+1,0).getDate()));
+   if(next.getTime()<Date.now()){next.setMonth(next.getMonth()+1,1);next.setDate(Math.min(day,new Date(next.getFullYear(),next.getMonth()+1,0).getDate()))}
+ } else if(rule==="weekly"){
+   next=new Date(base);while(next.getTime()<Date.now())next.setDate(next.getDate()+7);
+ } else if(rule==="daily"){
+   next=new Date(base);while(next.getTime()<Date.now())next.setDate(next.getDate()+1);
+ }
+ return next.getTime();
+}
 function dateInputValue(d){const date=d?new Date(d):new Date(Date.now()+86400000);date.setMinutes(date.getMinutes()-date.getTimezoneOffset());return date.toISOString().slice(0,16)}
 function renderList(){
 $("eventList").replaceChildren();
-const ordered=[...events].sort((a,b)=>{const ta=safeDate(a.date),tb=safeDate(b.date),now=Date.now(),aPast=ta<now,bPast=tb<now;if(aPast!==bPast)return aPast?1:-1;return aPast?tb-ta:ta-tb});
+const ordered=[...events].sort((a,b)=>{const ta=occurrenceDate(a),tb=occurrenceDate(b),now=Date.now(),aPast=ta<now,bPast=tb<now;if(aPast!==bPast)return aPast?1:-1;return aPast?tb-ta:ta-tb});
 ordered.forEach(e=>{const b=document.createElement("button");b.className="pill"+(e.id===selected?" active":"");const symbol=e.category==="voyage"?"✈ ":e.category==="amour"?"♡ ":e.category==="anniversaire"?"🎂 ":e.category==="objectif"?"✦ ":"";b.textContent=symbol+e.name;b.title=e.name;b.onclick=()=>{selected=e.id;render()};$("eventList").append(b)});
 
 }
 function renderAllEvents(){
  const upcoming=$("upcomingEvents"),past=$("pastEvents");if(!upcoming||!past)return;upcoming.replaceChildren();past.replaceChildren();
- const ordered=[...events].sort((a,b)=>safeDate(a.date)-safeDate(b.date));let n=0,p=0;
- ordered.forEach(e=>{const isPast=safeDate(e.date)<Date.now();const card=document.createElement("button");card.className="event-card";card.type="button";card.dataset.eventId=e.id;
+ const ordered=[...events].sort((a,b)=>occurrenceDate(a)-occurrenceDate(b));let n=0,p=0;
+ ordered.forEach(e=>{const isPast=(e.recurrence||"none")==="none"&&safeDate(e.date)<Date.now();const card=document.createElement("button");card.className="event-card";card.type="button";card.dataset.eventId=e.id;
  const img=document.createElement("img");img.className="event-thumb";img.src=e.image||photos[0];img.alt="";
  const main=document.createElement("div");main.className="event-card-main";const name=document.createElement("div");name.className="event-card-name";name.textContent=e.name;
- const date=document.createElement("div");date.className="event-card-date";date.textContent=new Date(safeDate(e.date)).toLocaleString("fr-FR",{day:"numeric",month:"long",year:"numeric",hour:"2-digit",minute:"2-digit"});main.append(name,date);
- const count=document.createElement("div");count.className="event-card-count";count.textContent=isPast?"Passé":(Math.ceil((safeDate(e.date)-Date.now())/86400000)+" j");card.append(img,main,count);
+ const date=document.createElement("div");date.className="event-card-date";date.textContent=new Date(occurrenceDate(e)).toLocaleString("fr-FR",{day:"numeric",month:"long",year:"numeric",hour:"2-digit",minute:"2-digit"});main.append(name,date);
+ const count=document.createElement("div");count.className="event-card-count";count.textContent=isPast?"Passé":(Math.ceil((occurrenceDate(e)-Date.now())/86400000)+" j");card.append(img,main,count);
  let startX=null,startY=null,swiped=false;card.addEventListener("pointerdown",ev=>{startX=ev.clientX;startY=ev.clientY;swiped=false;});card.addEventListener("pointerup",ev=>{if(startX===null)return;const dx=ev.clientX-startX,dy=ev.clientY-startY;startX=null;if(dx>85&&Math.abs(dx)>Math.abs(dy)*1.25){swiped=true;const ok=confirm(`Supprimer « ${e.name} » ?`);if(ok)deleteEvent(e.id);}});card.addEventListener("click",ev=>{if(swiped){ev.preventDefault();ev.stopPropagation();swiped=false;return}selected=e.id;$("listScreen").classList.remove("open");render();window.scrollTo(0,0)});(isPast?past:upcoming).append(card);if(isPast)p++;else n++;
  });
  if(!n)upcoming.innerHTML='<p class="helper">Aucun événement à venir. Crée-en un pour commencer.</p>';
@@ -246,10 +269,10 @@ $("eventTitle").style.letterSpacing=`${Number.isFinite(e.letterSpacing)?e.letter
 $("eventTitle").style.color=e.titleColor||"#f4f0e7";
 $("eventSubtitle").style.fontSize=`${e.subtitleSize||15}px`;
 $("eventSubtitle").style.color=e.subtitleColor||"#f1eee7";
-$("dateLabel").textContent=new Date(safeDate(e.date)).toLocaleDateString("fr-FR",{day:"2-digit",month:"short",year:"numeric"});tick();
+$("dateLabel").textContent=new Date(occurrenceDate(e)).toLocaleDateString("fr-FR",{day:"2-digit",month:"short",year:"numeric"});tick();
 }
 function tick(){
-const e=current();if(!e)return;let diff=safeDate(e.date)-Date.now();
+const e=current();if(!e)return;let diff=occurrenceDate(e)-Date.now();
 if(diff<=0){$("days").textContent="000";$("hours").textContent="00";$("minutes").textContent="00";$("seconds").textContent="00";$("eyebrow").textContent="CE MOMENT EST ARRIVÉ ✨";return}
 $("eyebrow").textContent="A LITTLE CLOSER, EVERY DAY";const d=Math.floor(diff/86400000);diff%=86400000;const h=Math.floor(diff/3600000);diff%=3600000;const m=Math.floor(diff/60000);const s=Math.floor(diff%60000/1000);
 $("days").textContent=String(d).padStart(3,"0");$("hours").textContent=String(h).padStart(2,"0");$("minutes").textContent=String(m).padStart(2,"0");$("seconds").textContent=String(s).padStart(2,"0");
@@ -262,7 +285,7 @@ function deleteEvent(id){
 }
 function openForm(id){
 editing=id||null;const e=events.find(x=>x.id===id);$("eventForm").reset();pendingImage=null;
-$("formTitle").textContent=e?"Modifier le souvenir":"Un nouveau souvenir";$("name").value=e?e.name:"";$("description").value=e?e.description||"":"";$("category").value=e?e.category||"autre":"autre";
+$("formTitle").textContent=e?"Modifier le souvenir":"Un nouveau souvenir";$("name").value=e?e.name:"";$("description").value=e?e.description||"":"";$("category").value=e?e.category||"autre":"autre";$("recurrence").value=e?e.recurrence||"none":"none";
 $("zoom").value=e?e.zoom||1:1;$("zoomValue").textContent=Number($("zoom").value).toFixed(2).replace(/0$/,"")+"×";
 $("darkness").value=e&&typeof e.shade==="number"?e.shade:globalShade;$("darknessValue").textContent=Math.round(Number($("darkness").value)*100)+"%";
 $("accent").value=e&&/^#[0-9a-f]{6}$/i.test(e.accent||"")?e.accent:"#e7c99a";$("textStyle").value=e?e.textStyle||"serif":"serif";
@@ -284,13 +307,13 @@ $("add").onclick=()=>openForm(null);$("addEmpty").onclick=()=>openForm(null);$("
 $("cancel").onclick=()=>$("modal").classList.remove("open");
 $("modal").addEventListener("click",e=>{if(e.target===$("modal"))$("modal").classList.remove("open")});
 $("eventForm").addEventListener("submit",async e=>{
-e.preventDefault();const name=$("name").value.trim(),date=$("date").value;if(!name||!date||safeDate(date)<=Date.now()){alert("Choisis un nom et une date future.");return}
+e.preventDefault();const name=$("name").value.trim(),date=$("date").value;if(!name||!date||($("recurrence").value==="none"&&safeDate(date)<=Date.now())){alert("Choisis un nom et une date future, ou active une répétition pour une date récurrente.");return}
 const saveBtn=$("saveButton");saveBtn.disabled=true;saveBtn.textContent="Enregistrement…";
 try{
 const old=events.find(x=>x.id===editing);let image=(old&&old.image)||photos[0];
 if(pendingImage)image=pendingImage;else if($("imageFile").files[0])image=await compressPhoto($("imageFile").files[0]);
 const rawShade=Number($("darkness").value),zoom=Number($("zoom").value);
-const item={id:editing||(String(Date.now())+Math.random().toString(16).slice(2)),name,date:new Date(date).toISOString(),description:$("description").value.trim(),category:$("category").value,image,zoom,shade:rawShade,accent:$("accent").value,textStyle:$("textStyle").value,titleSize:Number($("titleSize").value),subtitleSize:Number($("subtitleSize").value),titleColor:$("titleColor").value,subtitleColor:$("subtitleColor").value,letterSpacing:Number($("letterSpacing").value),posX:old&&Number.isFinite(old.posX)?old.posX:50,posY:old&&Number.isFinite(old.posY)?old.posY:50};
+const item={id:editing||(String(Date.now())+Math.random().toString(16).slice(2)),name,date:new Date(date).toISOString(),description:$("description").value.trim(),category:$("category").value,recurrence:$("recurrence").value,image,zoom,shade:rawShade,accent:$("accent").value,textStyle:$("textStyle").value,titleSize:Number($("titleSize").value),subtitleSize:Number($("subtitleSize").value),titleColor:$("titleColor").value,subtitleColor:$("subtitleColor").value,letterSpacing:Number($("letterSpacing").value),posX:old&&Number.isFinite(old.posX)?old.posX:50,posY:old&&Number.isFinite(old.posY)?old.posY:50};
 const previous=events;events=editing?events.map(x=>x.id===editing?item:x):[...events,item];
 if(!save()){events=previous;return}
 selected=(nearestUpcoming()||item).id;render();$("modal").classList.remove("open");notify("Souvenir enregistré ✨");
