@@ -90,13 +90,25 @@ select option{background:#1c211e;color:white}
 .celebration-title{font:clamp(42px,11vw,68px)/1 Georgia,serif;color:#fff5df;text-shadow:0 0 35px #e7c99a55;margin:0 0 18px}
 .celebration-message{color:#f4f0e7;font-size:15px;line-height:1.6;margin:0 auto 26px}
 .celebration-close{border:1px solid #e7c99a99;border-radius:30px;padding:13px 24px;background:#e7c99a;color:#20231f;font-weight:650}
-/* Effets visuels personnalisés par événement */
-.celebration.effect-glow{background:radial-gradient(ellipse at center,rgba(216,177,104,.5),rgba(5,8,6,.96))}
-.celebration.effect-hearts{background:radial-gradient(ellipse at center,rgba(112,35,69,.78),rgba(8,5,10,.96))}
-.celebration.effect-stars{background:radial-gradient(ellipse at center,rgba(44,48,105,.82),rgba(3,4,13,.97))}
-.celebration.effect-flash{animation:memoraFlash .9s ease both}
-.celebration.effect-nature{background:radial-gradient(ellipse at center,rgba(37,91,63,.82),rgba(5,10,7,.97))}
-.celebration.effect-hearts .confetti{background-image:radial-gradient(circle,#ff8bb4 2px,transparent 3px),radial-gradient(circle,#ffd9e7 2px,transparent 3px);background-size:80px 90px,130px 120px}
+/* Ambiances Jour J renforcées */
+.celebration{isolation:isolate;background:radial-gradient(ellipse at 50% 42%,rgba(181,126,43,.62),rgba(6,8,12,.97) 72%);}
+.celebration:before{content:"";position:absolute;inset:-25%;pointer-events:none;z-index:0;background:conic-gradient(from 0deg,transparent 0 8%,rgba(255,225,155,.14) 10%,transparent 13% 25%,rgba(255,255,255,.09) 27%,transparent 31% 50%);animation:memoraRays 18s linear infinite;}
+.celebration-card{padding:30px 24px;border:1px solid rgba(255,230,177,.38);border-radius:28px;background:linear-gradient(145deg,rgba(255,255,255,.13),rgba(255,255,255,.035));box-shadow:0 25px 100px #0008, inset 0 1px 0 #ffffff2b;backdrop-filter:blur(14px);}
+.celebration-title{animation:titleReveal .8s cubic-bezier(.2,.8,.2,1) both;text-wrap:balance;}
+.celebration.effect-confetti{background:radial-gradient(ellipse at 50% 35%,rgba(139,97,34,.75),rgba(6,8,12,.97) 72%)}
+.celebration.effect-glow{background:radial-gradient(circle at 50% 45%,#f9d98b88 0, #b7783266 24%,rgba(5,8,12,.98) 70%)}
+.celebration.effect-hearts{background:radial-gradient(ellipse at center,#9f275eaa 0,#45132eaa 35%,#09050b 78%)}
+.celebration.effect-stars{background:radial-gradient(ellipse at 50% 40%,#333e9baa 0,#111633 38%,#02030b 78%)}
+.celebration.effect-flash{animation:memoraFlash .8s ease both;background:#fff}
+.celebration.effect-flash .celebration-card{animation:flashCard .9s cubic-bezier(.2,.8,.2,1) both}
+.celebration.effect-nature{background:radial-gradient(ellipse at 50% 40%,#367a51cc 0,#143c2a 38%,#030a06 80%)}
+.celebration.effect-hearts:before{background:radial-gradient(ellipse at center,rgba(255,105,170,.2),transparent 62%);animation:heartPulse 2s ease-in-out infinite alternate}
+.celebration.effect-stars:before{background:radial-gradient(circle at 20% 25%,#fff9 0 1px,transparent 2px),radial-gradient(circle at 75% 35%,#c9d5ff 0 2px,transparent 3px),radial-gradient(circle at 40% 70%,#fff8 0 1px,transparent 2px);background-size:140px 140px,190px 190px,110px 110px;animation:starDrift 12s linear infinite}
+.celebration.effect-glow .confetti{opacity:.2;filter:blur(1px)}
+.celebration.effect-nature .confetti{opacity:.3;filter:hue-rotate(60deg)}
+.memora-particle{position:absolute;left:var(--x);top:var(--y);font-size:var(--size);line-height:1;pointer-events:none;z-index:1;opacity:0;filter:drop-shadow(0 0 8px currentColor);animation:particleBurst var(--dur) cubic-bezier(.1,.7,.2,1) var(--delay) forwards;}
+@keyframes memoraRays{to{transform:rotate(360deg)}}@keyframes titleReveal{from{opacity:0;transform:translateY(18px) scale(.94);filter:blur(8px)}to{opacity:1;transform:none;filter:blur(0)}}@keyframes heartPulse{from{transform:scale(.9);opacity:.45}to{transform:scale(1.15);opacity:1}}@keyframes starDrift{from{transform:translateY(-3%) rotate(0)}to{transform:translateY(3%) rotate(10deg)}}@keyframes particleBurst{0%{opacity:0;transform:translate3d(0,35px,0) scale(.3) rotate(0)}12%{opacity:1}75%{opacity:.95}100%{opacity:0;transform:translate3d(var(--dx),-110px,0) scale(1.25) rotate(var(--rot))}}
+.confetti{background-image:radial-gradient(circle,#ff8bb4 2px,transparent 3px),radial-gradient(circle,#ffd9e7 2px,transparent 3px);background-size:80px 90px,130px 120px}
 .celebration.effect-stars .confetti{background-image:radial-gradient(circle,#fff5b8 1.5px,transparent 2px),radial-gradient(circle,#aab9ff 2px,transparent 2.5px);background-size:53px 63px,103px 117px}
 .celebration.effect-glow .confetti,.celebration.effect-nature .confetti{opacity:.28}
 .celebration.effect-flash .celebration-card{animation:flashCard .9s ease both}
@@ -291,17 +303,42 @@ function isActiveToday(e, now=new Date()){
 let memoraAudioContext=null;
 function playEventSound(kind){
  if(!kind||kind==="none")return;
- try{const Ctx=window.AudioContext||window.webkitAudioContext;if(!Ctx)return;memoraAudioContext=memoraAudioContext||new Ctx();if(memoraAudioContext.state==="suspended")memoraAudioContext.resume();const ctx=memoraAudioContext,now=ctx.currentTime;
- const patterns={chime:[[880,0,.22],[1175,.18,.35]],party:[[523,0,.14],[659,.13,.14],[784,.26,.14],[1046,.39,.3]],romantic:[[523,0,.36],[659,.32,.36],[784,.64,.55]],magic:[[784,0,.2],[1175,.15,.2],[1568,.3,.45]],victory:[[392,0,.16],[523,.15,.16],[659,.3,.16],[784,.45,.35]]};
- (patterns[kind]||[]).forEach(([freq,delay,duration])=>{const osc=ctx.createOscillator(),gain=ctx.createGain();osc.type=kind==="magic"?"sine":kind==="party"?"triangle":"sine";osc.frequency.setValueAtTime(freq,now+delay);gain.gain.setValueAtTime(.0001,now+delay);gain.gain.exponentialRampToValueAtTime(.16,now+delay+.025);gain.gain.exponentialRampToValueAtTime(.0001,now+delay+duration);osc.connect(gain);gain.connect(ctx.destination);osc.start(now+delay);osc.stop(now+delay+duration+.03)});
- }catch(err){/* L'effet visuel reste actif si l'audio est indisponible. */}
+ try{
+  const Ctx=window.AudioContext||window.webkitAudioContext;if(!Ctx)return;
+  memoraAudioContext=memoraAudioContext||new Ctx();const ctx=memoraAudioContext;
+  const launch=()=>{
+   const t=ctx.currentTime+0.04;
+   const patterns={
+    chime:{notes:[659,784,988,1318,988,1318],step:.19,wave:"sine",dur:.55,bass:[330,0]},
+    party:{notes:[523,659,784,1046,784,1046,1318],step:.15,wave:"triangle",dur:.25,bass:[131,0]},
+    romantic:{notes:[523,659,784,659,587,698,880],step:.27,wave:"sine",dur:.7,bass:[262,0]},
+    magic:{notes:[659,784,988,1175,1568,1175,1760],step:.17,wave:"sine",dur:.6,bass:[220,0]},
+    victory:{notes:[392,523,659,784,988,784,1046],step:.16,wave:"triangle",dur:.34,bass:[196,0]}
+   };
+   const p=patterns[kind];if(!p)return;
+   p.notes.forEach((freq,i)=>{
+    const at=t+i*p.step;
+    [1,2.01].forEach((ratio,j)=>{const osc=ctx.createOscillator(),gain=ctx.createGain(),filter=ctx.createBiquadFilter();osc.type=p.wave;osc.frequency.setValueAtTime(freq*ratio,at);filter.type="lowpass";filter.frequency.setValueAtTime(j?3200:5200,at);gain.gain.setValueAtTime(.0001,at);gain.gain.exponentialRampToValueAtTime((j?.035:.13)/(1+i*.07),at+.018);gain.gain.exponentialRampToValueAtTime(.0001,at+p.dur);osc.connect(filter);filter.connect(gain);gain.connect(ctx.destination);osc.start(at);osc.stop(at+p.dur+.03)});
+   });
+   // Low, soft cinematic swell underneath the melody
+   const bass=ctx.createOscillator(),bg=ctx.createGain(),filter=ctx.createBiquadFilter();bass.type="sine";bass.frequency.setValueAtTime(p.bass[0],t);bass.frequency.exponentialRampToValueAtTime(p.bass[0]*1.5,t+.7);filter.type="lowpass";filter.frequency.value=240;bg.gain.setValueAtTime(.0001,t);bg.gain.exponentialRampToValueAtTime(.075,t+.12);bg.gain.exponentialRampToValueAtTime(.0001,t+1.6);bass.connect(filter);filter.connect(bg);bg.connect(ctx.destination);bass.start(t);bass.stop(t+1.65);
+  };
+  if(ctx.state==="suspended")ctx.resume().then(launch).catch(()=>{});else launch();
+ }catch(err){/* L'effet visuel reste disponible si l'audio est bloqué. */}
 }
+function createAmbienceParticles(effect){
+ const box=$("celebration");box.querySelectorAll(".memora-particle").forEach(n=>n.remove());
+ const glyphs={confetti:["✦","✧","●","◆","✺"],glow:["✦","✧","☼"],hearts:["♥","♡","💗"],stars:["✦","✧","★","⋆"],flash:["✦","✧","⚡"],nature:["✿","❋","❧","✦"]};
+ const colors={confetti:["#f8d98c","#fff1c5","#d8a84e","#f3a5b8"],glow:["#fff2bd","#f7ce75","#ffffff"],hearts:["#ff8bb4","#ffd6e7","#ff477e"],stars:["#ffffff","#c7d4ff","#ffeeb0"],flash:["#ffffff","#fff3c2"],nature:["#b8e7a8","#e3f6c7","#8fd6b0"]};
+ for(let i=0;i<52;i++){const el=document.createElement("span");el.className="memora-particle";el.textContent=glyphs[effect]||glyphs.confetti;el.textContent=el.textContent[Math.floor(Math.random()*el.textContent.length)];el.style.setProperty("--x",Math.random()*100+"%");el.style.setProperty("--y",(35+Math.random()*65)+"%");el.style.setProperty("--size",(10+Math.random()*24)+"px");el.style.setProperty("--dx",(Math.random()*240-120)+"px");el.style.setProperty("--rot",(Math.random()*540-270)+"deg");el.style.setProperty("--dur",(2.4+Math.random()*3.2)+"s");el.style.setProperty("--delay",(Math.random()*.8)+"s");el.style.color=(colors[effect]||colors.confetti)[Math.floor(Math.random()*(colors[effect]||colors.confetti).length)];box.appendChild(el)}
+}
+
 function eventOccurrenceKey(e,timestamp){return `${e.id}:${new Date(timestamp).getFullYear()}-${new Date(timestamp).getMonth()+1}-${new Date(timestamp).getDate()}`}
 function celebrate(e,timestamp){
  const key=eventOccurrenceKey(e,timestamp);let seen=[];try{seen=JSON.parse(localStorage.getItem("memora-celebrated")||"[]")}catch(_){seen=[]}
  if(seen.includes(key))return;
  seen.push(key);try{localStorage.setItem("memora-celebrated",JSON.stringify(seen.slice(-300)))}catch(_){}
- $("celebrationTitle").textContent=e.name+" ✨";$("celebrationMessage").textContent=e.description||"Le moment que tu attendais est arrivé. Profite pleinement de cette journée !";const celebration=$("celebration");celebration.classList.remove("effect-confetti","effect-glow","effect-hearts","effect-stars","effect-flash","effect-nature");celebration.classList.add("effect-"+(e.visualEffect||"confetti"),"show");playEventSound(e.eventSound||"none");
+ $("celebrationTitle").textContent=e.name+" ✨";$("celebrationMessage").textContent=e.description||"Le moment que tu attendais est arrivé. Profite pleinement de cette journée !";const celebration=$("celebration");celebration.classList.remove("effect-confetti","effect-glow","effect-hearts","effect-stars","effect-flash","effect-nature");celebration.classList.add("effect-"+(e.visualEffect||"confetti"),"show");createAmbienceParticles(e.visualEffect||"confetti");playEventSound(e.eventSound||"none");
  if("Notification" in window&&Notification.permission==="granted")try{new Notification("C’est le grand jour !",{body:e.name,tag:key})}catch(_){}
 }
 function checkCelebrations(){
@@ -394,7 +431,7 @@ selected=(nearestUpcoming()||item).id;render();$("modal").classList.remove("open
 }catch(err){alert("Impossible de traiter cette photo. Essaie avec une autre image ou une image plus légère.")}
 finally{saveBtn.disabled=false;saveBtn.textContent="Enregistrer"}
 });
-$("previewAmbience").onclick=()=>{const effect=$("visualEffect").value,box=$("celebration");box.classList.remove("effect-confetti","effect-glow","effect-hearts","effect-stars","effect-flash","effect-nature");box.classList.add("effect-"+effect,"show");$("celebrationTitle").textContent="Aperçu de l’effet";$("celebrationMessage").textContent="Voici l’ambiance choisie pour ton événement.";playEventSound($("eventSound").value)};
+$("previewAmbience").onclick=()=>{const effect=$("visualEffect").value,box=$("celebration");box.classList.remove("effect-confetti","effect-glow","effect-hearts","effect-stars","effect-flash","effect-nature");box.classList.add("effect-"+effect,"show");createAmbienceParticles(effect);$("celebrationTitle").textContent="Aperçu de l’effet";$("celebrationMessage").textContent="Voici l’ambiance choisie pour ton événement.";playEventSound($("eventSound").value)};
 $("remove").onclick=()=>{if(!editing||!confirm("Supprimer cet événement ?"))return;const id=editing;deleteEvent(id);$("modal").classList.remove("open")};
 ["titleSize","subtitleSize","letterSpacing"].forEach(id=>$(id).addEventListener("input",()=>{$(id+"Value").textContent=$(id).value+(id==="letterSpacing"?" px":" px")}));
 $("imageFile").addEventListener("change",async e=>{const file=e.target.files[0];if(!file)return;try{pendingImage=await compressPhoto(file);$("photoPreview").src=pendingImage;$("photoPreview").style.objectPosition="50% 50%";$("photoPreview").style.transform="scale("+$("zoom").value+")";notify("Photo prête à être enregistrée")}catch(err){alert("Cette photo ne peut pas être utilisée. Essaie une autre image.")}});
