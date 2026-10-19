@@ -83,6 +83,15 @@ select option{background:#1c211e;color:white}
 .range-value{text-align:right;font-size:11px;color:#cfc7b8}
 .toast{position:fixed;left:18px;right:18px;bottom:calc(env(safe-area-inset-bottom) + 18px);z-index:20;text-align:center;background:#f4f0e7;color:#20231f;padding:12px 16px;border-radius:15px;font-size:13px;box-shadow:0 8px 30px #0006;display:none}
 .toast.show{display:block}
+.celebration{position:fixed;inset:0;z-index:30;display:none;place-items:center;padding:24px;background:radial-gradient(ellipse at center,rgba(67,77,55,.88),rgba(5,8,6,.94));backdrop-filter:blur(12px);text-align:center;overflow:hidden}
+.celebration.show{display:grid;animation:celebrateIn .55s ease both}
+.celebration-card{max-width:430px;position:relative;z-index:2;animation:celebrateFloat 2.5s ease-in-out infinite}
+.celebration-kicker{font-size:11px;letter-spacing:4px;text-transform:uppercase;color:#e7c99a;margin-bottom:18px}
+.celebration-title{font:clamp(42px,11vw,68px)/1 Georgia,serif;color:#fff5df;text-shadow:0 0 35px #e7c99a55;margin:0 0 18px}
+.celebration-message{color:#f4f0e7;font-size:15px;line-height:1.6;margin:0 auto 26px}
+.celebration-close{border:1px solid #e7c99a99;border-radius:30px;padding:13px 24px;background:#e7c99a;color:#20231f;font-weight:650}
+.confetti{position:absolute;inset:-15%;pointer-events:none;background-image:radial-gradient(circle,#f4d7a1 1.5px,transparent 2px),radial-gradient(circle,#fff2cf 2px,transparent 2.5px),radial-gradient(circle,#b8c49a 1.5px,transparent 2px);background-size:71px 93px,113px 127px,157px 109px;background-position:0 0,30px 40px,70px 12px;animation:confettiFall 7s linear infinite;opacity:.75}
+@keyframes celebrateIn{from{opacity:0}to{opacity:1}}@keyframes celebrateFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}@keyframes confettiFall{from{transform:translateY(-5%) rotate(0)}to{transform:translateY(10%) rotate(8deg)}}
 .list-screen{position:fixed;inset:0;z-index:8;display:none;overflow:auto;background:#101510;padding:calc(env(safe-area-inset-top) + 18px) 18px calc(env(safe-area-inset-bottom) + 28px)}
 .list-screen.open{display:block}.list-inner{max-width:720px;margin:0 auto}.list-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}.list-head h2{font:32px Georgia,serif;margin:0}.event-card{display:flex;align-items:center;gap:12px;width:100%;text-align:left;color:var(--cream);background:#ffffff0d;border:1px solid #ffffff20;border-radius:17px;padding:10px;margin:10px 0;position:relative;touch-action:pan-y;transition:background .18s,transform .18s;overflow:hidden}.event-card.swiping{background:#8e302b;transform:translateX(18px);box-shadow:0 8px 24px #0005}.event-card.swiping .swipe-delete-indicator{opacity:1;transform:scale(1)}.swipe-delete-indicator{position:absolute;left:12px;top:50%;transform:scale(.75) translateY(-50%);opacity:0;color:#fff;font-size:22px;transition:opacity .12s,transform .12s;pointer-events:none}.event-card.swiping .event-thumb,.event-card.swiping .event-card-main,.event-card.swiping .event-card-count{filter:brightness(.78)}.recurrence-chip{display:inline-flex;align-items:center;gap:5px;margin-top:7px;padding:4px 8px;border:1px solid #ffffff35;border-radius:20px;background:#ffffff14;color:#f3d7a5;font-size:11px;letter-spacing:.2px}.event-card-recurrence{display:block;color:#e8c995;font-size:11px;margin-top:5px}.swipe-hint{font-size:10px;color:#ffcbc1;white-space:nowrap;letter-spacing:.3px}.event-thumb{width:76px;height:76px;flex:0 0 76px;object-fit:cover;border-radius:12px;background:#28312c}.event-card-main{min-width:0;flex:1}.event-card-name{font-weight:650;overflow-wrap:anywhere}.event-card-date{font-size:12px;color:#c4c4b9;margin-top:5px}.event-card-count{font-size:12px;color:var(--gold);white-space:nowrap}.list-section{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin:22px 0 8px}.nav-row{display:flex;gap:9px;margin:18px 0 4px}.nav-row button{flex:1}.home-button{border:1px solid #ffffff40;border-radius:28px;padding:13px 16px;background:#ffffff12;color:white;font-weight:600}
 @media(min-width:650px){.content{padding-left:44px;padding-right:44px}.number{font-size:48px}.intro{padding-top:80px}.hero{min-height:100svh}}
@@ -186,7 +195,7 @@ select option{background:#1c211e;color:white}
 <div class="sheet">
 <h2 id="settingsTitle">Personnaliser Memora</h2>
 <p>Choisis la façon dont le compte à rebours s’affiche.</p>
-<label for="showSeconds">Affichage des secondes</label>
+<button type="button" class="secondary" id="enableNotifications" style="width:100%;margin:4px 0 12px">Activer les notifications</button><div class="helper" id="notificationHelp">Les notifications dépendent des autorisations iOS et du mode d’installation de Memora.</div><label for="showSeconds">Affichage des secondes</label>
 <select id="showSeconds"><option value="yes">Afficher les secondes</option><option value="no">Masquer les secondes</option></select>
 <label for="globalShade">Intensité du voile par défaut</label>
 <div class="range-row"><input id="globalShade" type="range" min="0" max=".8" step=".02" value=".42"><span class="range-value" id="globalShadeValue">42%</span></div>
@@ -194,7 +203,7 @@ select option{background:#1c211e;color:white}
 <div class="form-actions"><button class="primary" id="closeSettings">Terminé</button></div>
 </div>
 </div>
-<div class="toast" id="toast" role="status"></div>
+<div class="celebration" id="celebration" role="dialog" aria-modal="true" aria-labelledby="celebrationTitle"><div class="confetti" aria-hidden="true"></div><div class="celebration-card"><div class="celebration-kicker">MEMORA · LE GRAND JOUR</div><h2 class="celebration-title" id="celebrationTitle">C’est aujourd’hui ✨</h2><p class="celebration-message" id="celebrationMessage">Le moment que tu attendais est arrivé.</p><button class="celebration-close" id="closeCelebration">Profiter du moment</button></div></div><div class="toast" id="toast" role="status"></div>
 
 <script>
 (function(){
@@ -211,11 +220,11 @@ try{const saved=JSON.parse(localStorage.getItem("memora-events")||"null");events
 if(!Array.isArray(events))events=[];
 // Keep the original localStorage key and tolerate older event objects.
 events=events.map(e=>({...e,zoom:Number(e.zoom)||1,shade:typeof e.shade==="number"?e.shade:.42,accent:e.accent||"#e7c99a",textStyle:e.textStyle||"serif",titleSize:Number(e.titleSize)||72,subtitleSize:Number(e.subtitleSize)||15,titleColor:e.titleColor||"#f4f0e7",subtitleColor:e.subtitleColor||"#f1eee7",letterSpacing:Number.isFinite(e.letterSpacing)?e.letterSpacing:-2,posX:Number.isFinite(e.posX)?e.posX:50,posY:Number.isFinite(e.posY)?e.posY:50,category:e.category||"autre"}));
-const nearestUpcoming=()=>[...events].filter(e=>occurrenceDate(e)>=Date.now()).sort((a,b)=>occurrenceDate(a)-occurrenceDate(b))[0];
+const nearestUpcoming=()=>[...events].filter(e=>occurrenceDate(e)>=Date.now()||isActiveToday(e)).sort((a,b)=>{const aa=isActiveToday(a)?Date.now():occurrenceDate(a),bb=isActiveToday(b)?Date.now():occurrenceDate(b);return aa-bb})[0];
 let selected=(nearestUpcoming()||events[0]||{}).id||null,editing=null,photoIndex=0,pendingImage=null,pointerStart=null,toastTimer=null,globalShade=.42;
 function notify(msg){$("toast").textContent=msg;$("toast").classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(()=>$("toast").classList.remove("show"),2600)}
 function save(){try{localStorage.setItem("memora-events",JSON.stringify(events));return true}catch(e){notify("Stockage saturé : essaie une photo plus légère.");return false}}
-function current(){return events.find(e=>e.id===selected)||nearestUpcoming()||events[0]||null}
+function current(){const chosen=events.find(e=>e.id===selected);if(chosen&&(occurrenceDate(chosen)>=Date.now()||isActiveToday(chosen)))return chosen;return nearestUpcoming()||null}
 function safeDate(d){const t=new Date(d).getTime();return Number.isFinite(t)?t:Date.now()}
 function occurrenceDate(e){
  const base=new Date(e.date);if(!Number.isFinite(base.getTime()))return Date.now();
@@ -237,6 +246,44 @@ function occurrenceDate(e){
  }
  return next.getTime();
 }
+function occurrenceToday(e, now=new Date()){
+ const base=new Date(e.date);if(!Number.isFinite(base.getTime()))return null;
+ const rule=e.recurrence||"none";const sameDay=d=>d.getFullYear()===now.getFullYear()&&d.getMonth()===now.getMonth()&&d.getDate()===now.getDate();
+ if(rule==="none")return sameDay(base)?base.getTime():null;
+ let d=new Date(base);d.setFullYear(now.getFullYear());
+ if(rule==="yearly"){
+  if(d.getMonth()!==base.getMonth())d.setDate(0);
+  return sameDay(d)?d.getTime():null;
+ }
+ if(rule==="monthly"){
+  d=new Date(now.getFullYear(),now.getMonth(),1,base.getHours(),base.getMinutes(),base.getSeconds());
+  d.setDate(Math.min(base.getDate(),new Date(now.getFullYear(),now.getMonth()+1,0).getDate()));
+  return sameDay(d)?d.getTime():null;
+ }
+ if(rule==="weekly"||rule==="daily"){
+  const step=rule==="weekly"?7:1;let candidate=new Date(base);candidate.setHours(base.getHours(),base.getMinutes(),base.getSeconds(),0);
+  if(candidate>now)return null;
+  const days=Math.floor((new Date(now.getFullYear(),now.getMonth(),now.getDate())-new Date(candidate.getFullYear(),candidate.getMonth(),candidate.getDate()))/86400000);
+  candidate.setDate(candidate.getDate()+Math.floor(days/step)*step);
+  return sameDay(candidate)?candidate.getTime():null;
+ }
+ return null;
+}
+function isActiveToday(e, now=new Date()){
+ const t=occurrenceToday(e,now);return t!==null&&t<=now.getTime();
+}
+function eventOccurrenceKey(e,timestamp){return `${e.id}:${new Date(timestamp).getFullYear()}-${new Date(timestamp).getMonth()+1}-${new Date(timestamp).getDate()}`}
+function celebrate(e,timestamp){
+ const key=eventOccurrenceKey(e,timestamp);let seen=[];try{seen=JSON.parse(localStorage.getItem("memora-celebrated")||"[]")}catch(_){seen=[]}
+ if(seen.includes(key))return;
+ seen.push(key);try{localStorage.setItem("memora-celebrated",JSON.stringify(seen.slice(-300)))}catch(_){}
+ $("celebrationTitle").textContent=e.name+" ✨";$("celebrationMessage").textContent=e.description||"Le moment que tu attendais est arrivé. Profite pleinement de cette journée !";$("celebration").classList.add("show");
+ if("Notification" in window&&Notification.permission==="granted")try{new Notification("C’est le grand jour !",{body:e.name,tag:key})}catch(_){}
+}
+function checkCelebrations(){
+ const now=new Date();const due=events.map(e=>({e,t:occurrenceToday(e,now)})).filter(x=>x.t!==null&&x.t<=now.getTime()).sort((a,b)=>a.t-b.t);
+ for(const x of due){let seen=[];try{seen=JSON.parse(localStorage.getItem("memora-celebrated")||"[]")}catch(_){}if(!seen.includes(eventOccurrenceKey(x.e,x.t))){selected=x.e.id;render();celebrate(x.e,x.t);break}}
+}
 function dateInputValue(d){const date=d?new Date(d):new Date(Date.now()+86400000);date.setMinutes(date.getMinutes()-date.getTimezoneOffset());return date.toISOString().slice(0,16)}
 function renderList(){
 $("eventList").replaceChildren();
@@ -247,7 +294,7 @@ ordered.forEach(e=>{const b=document.createElement("button");b.className="pill"+
 function renderAllEvents(){
  const upcoming=$("upcomingEvents"),past=$("pastEvents");if(!upcoming||!past)return;upcoming.replaceChildren();past.replaceChildren();
  const ordered=[...events].sort((a,b)=>occurrenceDate(a)-occurrenceDate(b));let n=0,p=0;
- ordered.forEach(e=>{const isPast=(e.recurrence||"none")==="none"&&safeDate(e.date)<Date.now();const card=document.createElement("button");card.className="event-card";card.type="button";card.dataset.eventId=e.id;
+ ordered.forEach(e=>{const isPast=(e.recurrence||"none")==="none"&&safeDate(e.date)<Date.now()&&!isActiveToday(e);const card=document.createElement("button");card.className="event-card";card.type="button";card.dataset.eventId=e.id;
  const img=document.createElement("img");img.className="event-thumb";img.src=e.image||photos[0];img.alt="";
  const main=document.createElement("div");main.className="event-card-main";const name=document.createElement("div");name.className="event-card-name";name.textContent=e.name;
  const date=document.createElement("div");date.className="event-card-date";date.textContent=new Date(occurrenceDate(e)).toLocaleString("fr-FR",{day:"numeric",month:"long",year:"numeric",hour:"2-digit",minute:"2-digit"});main.append(name,date);
@@ -333,10 +380,17 @@ $("photoPreview").addEventListener("pointermove",e=>{if(!pointerStart||!(e.butto
 $("photoPreview").addEventListener("pointerup",()=>{if(pointerStart){const old=events.find(x=>x.id===editing);const x=Number($("photoPreview").dataset.x||50),y=Number($("photoPreview").dataset.y||50);$("photoPreview").dataset.x=x;$("photoPreview").dataset.y=y;if(old){old.posX=x;old.posY=y}pointerStart=null}});
 $("openSettings").onclick=()=>{$("globalShade").value=globalShade;$("globalShadeValue").textContent=Math.round(globalShade*100)+"%";$("showSeconds").value=localStorage.getItem("memora-show-seconds")||"yes";$("settingsModal").classList.add("open")};
 $("globalShade").addEventListener("input",()=>{$("globalShadeValue").textContent=Math.round(Number($("globalShade").value)*100)+"%";$("hero").style.setProperty("--shade",String($("globalShade").value))});
-$("closeSettings").onclick=()=>{globalShade=Number($("globalShade").value);localStorage.setItem("memora-show-seconds",$("showSeconds").value);$("secondsUnit").style.display=$("showSeconds").value==="no"?"none":"";const e=current();if(e&&typeof e.shade!=="number")e.shade=globalShade;save();$("settingsModal").classList.remove("open");render();notify("Affichage mis à jour")};
+$("enableNotifications").onclick=async()=>{
+ if(!("Notification" in window)){notify("Les notifications ne sont pas prises en charge ici.");$("notificationHelp").textContent="Ce navigateur ne propose pas les notifications web dans ce contexte.";return}
+ try{const permission=await Notification.requestPermission();$("notificationHelp").textContent=permission==="granted"?"Notifications autorisées. Elles pourront s’afficher lorsque Memora est active ; une alerte exacte application fermée n’est pas garantie.":"Autorisation refusée. L’effet visuel dans Memora fonctionnera quand même à la prochaine ouverture.";notify(permission==="granted"?"Notifications autorisées ✨":"Notifications non autorisées")}catch(_){notify("Impossible d’activer les notifications ici.")}
+ };
+ $("closeCelebration").onclick=()=>$("celebration").classList.remove("show");
+ $("celebration").addEventListener("click",ev=>{if(ev.target===$("celebration"))$("celebration").classList.remove("show")});
+ document.addEventListener("visibilitychange",()=>{if(!document.hidden)checkCelebrations()});window.addEventListener("focus",checkCelebrations);
+ $("closeSettings").onclick=()=>{globalShade=Number($("globalShade").value);localStorage.setItem("memora-show-seconds",$("showSeconds").value);$("secondsUnit").style.display=$("showSeconds").value==="no"?"none":"";const e=current();if(e&&typeof e.shade!=="number")e.shade=globalShade;save();$("settingsModal").classList.remove("open");render();notify("Affichage mis à jour")};
 $("settingsModal").addEventListener("click",e=>{if(e.target===$("settingsModal"))$("settingsModal").classList.remove("open")});
 if(localStorage.getItem("memora-show-seconds")==="no")$("secondsUnit").style.display="none";
-render();setInterval(tick,1000);
+render();checkCelebrations();setInterval(()=>{tick();checkCelebrations()},1000);
 })();
 </script>
 </body>
