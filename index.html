@@ -90,6 +90,17 @@ select option{background:#1c211e;color:white}
 .celebration-title{font:clamp(42px,11vw,68px)/1 Georgia,serif;color:#fff5df;text-shadow:0 0 35px #e7c99a55;margin:0 0 18px}
 .celebration-message{color:#f4f0e7;font-size:15px;line-height:1.6;margin:0 auto 26px}
 .celebration-close{border:1px solid #e7c99a99;border-radius:30px;padding:13px 24px;background:#e7c99a;color:#20231f;font-weight:650}
+/* Effets visuels personnalisés par événement */
+.celebration.effect-glow{background:radial-gradient(ellipse at center,rgba(216,177,104,.5),rgba(5,8,6,.96))}
+.celebration.effect-hearts{background:radial-gradient(ellipse at center,rgba(112,35,69,.78),rgba(8,5,10,.96))}
+.celebration.effect-stars{background:radial-gradient(ellipse at center,rgba(44,48,105,.82),rgba(3,4,13,.97))}
+.celebration.effect-flash{animation:memoraFlash .9s ease both}
+.celebration.effect-nature{background:radial-gradient(ellipse at center,rgba(37,91,63,.82),rgba(5,10,7,.97))}
+.celebration.effect-hearts .confetti{background-image:radial-gradient(circle,#ff8bb4 2px,transparent 3px),radial-gradient(circle,#ffd9e7 2px,transparent 3px);background-size:80px 90px,130px 120px}
+.celebration.effect-stars .confetti{background-image:radial-gradient(circle,#fff5b8 1.5px,transparent 2px),radial-gradient(circle,#aab9ff 2px,transparent 2.5px);background-size:53px 63px,103px 117px}
+.celebration.effect-glow .confetti,.celebration.effect-nature .confetti{opacity:.28}
+.celebration.effect-flash .celebration-card{animation:flashCard .9s ease both}
+@keyframes memoraFlash{0%{background:#fff}100%{background:rgba(5,8,6,.94)}}@keyframes flashCard{0%{opacity:0;transform:scale(.85)}35%{opacity:1;transform:scale(1.04)}100%{opacity:1;transform:scale(1)}}
 .confetti{position:absolute;inset:-15%;pointer-events:none;background-image:radial-gradient(circle,#f4d7a1 1.5px,transparent 2px),radial-gradient(circle,#fff2cf 2px,transparent 2.5px),radial-gradient(circle,#b8c49a 1.5px,transparent 2px);background-size:71px 93px,113px 127px,157px 109px;background-position:0 0,30px 40px,70px 12px;animation:confettiFall 7s linear infinite;opacity:.75}
 @keyframes celebrateIn{from{opacity:0}to{opacity:1}}@keyframes celebrateFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}@keyframes confettiFall{from{transform:translateY(-5%) rotate(0)}to{transform:translateY(10%) rotate(8deg)}}
 .list-screen{position:fixed;inset:0;z-index:8;display:none;overflow:auto;background:#101510;padding:calc(env(safe-area-inset-top) + 18px) 18px calc(env(safe-area-inset-bottom) + 28px)}
@@ -158,6 +169,11 @@ select option{background:#1c211e;color:white}
 <textarea id="description" maxlength="300" rows="3" placeholder="Quelques mots sur ce moment…"></textarea>
 <label for="category">Catégorie</label>
 <select id="category"><option value="voyage">✈️ Voyage</option><option value="amour">♡ À deux</option><option value="anniversaire">🎂 Anniversaire</option><option value="objectif">✦ Objectif</option><option value="autre" selected>✧ Autre moment</option></select>
+<div class="section-title">Ambiance du Jour J</div>
+<label for="visualEffect">Effet visuel</label>
+<select id="visualEffect"><option value="confetti">🎉 Confettis festifs</option><option value="glow">✨ Halo doré</option><option value="hearts">💖 Cœurs romantiques</option><option value="stars">🌌 Étoiles magiques</option><option value="flash">⚡ Flash spectaculaire</option><option value="nature">🌿 Lueur naturelle</option></select>
+<div class="grid2"><div><label for="eventSound">Son à jouer</label><select id="eventSound"><option value="none">🔇 Aucun son</option><option value="chime">🔔 Clochette</option><option value="party">🎊 Fête</option><option value="romantic">❤️ Mélodie douce</option><option value="magic">✨ Son magique</option><option value="victory">🏆 Victoire</option></select></div><div style="display:flex;align-items:end"><button type="button" class="secondary" id="previewAmbience" style="width:100%;padding:13px">▶ Prévisualiser</button></div></div>
+<div class="helper">Teste l’effet et le son avant d’enregistrer. Le son se déclenche lorsque Memora détecte le Jour J, si le navigateur autorise la lecture audio.</div>
 <div class="section-title">Photo & cadrage</div>
 <label for="imageFile">Choisir une photo dans mon iPhone</label>
 <input id="imageFile" type="file" accept="image/*">
@@ -272,12 +288,20 @@ function occurrenceToday(e, now=new Date()){
 function isActiveToday(e, now=new Date()){
  const t=occurrenceToday(e,now);return t!==null&&t<=now.getTime();
 }
+let memoraAudioContext=null;
+function playEventSound(kind){
+ if(!kind||kind==="none")return;
+ try{const Ctx=window.AudioContext||window.webkitAudioContext;if(!Ctx)return;memoraAudioContext=memoraAudioContext||new Ctx();if(memoraAudioContext.state==="suspended")memoraAudioContext.resume();const ctx=memoraAudioContext,now=ctx.currentTime;
+ const patterns={chime:[[880,0,.22],[1175,.18,.35]],party:[[523,0,.14],[659,.13,.14],[784,.26,.14],[1046,.39,.3]],romantic:[[523,0,.36],[659,.32,.36],[784,.64,.55]],magic:[[784,0,.2],[1175,.15,.2],[1568,.3,.45]],victory:[[392,0,.16],[523,.15,.16],[659,.3,.16],[784,.45,.35]]};
+ (patterns[kind]||[]).forEach(([freq,delay,duration])=>{const osc=ctx.createOscillator(),gain=ctx.createGain();osc.type=kind==="magic"?"sine":kind==="party"?"triangle":"sine";osc.frequency.setValueAtTime(freq,now+delay);gain.gain.setValueAtTime(.0001,now+delay);gain.gain.exponentialRampToValueAtTime(.16,now+delay+.025);gain.gain.exponentialRampToValueAtTime(.0001,now+delay+duration);osc.connect(gain);gain.connect(ctx.destination);osc.start(now+delay);osc.stop(now+delay+duration+.03)});
+ }catch(err){/* L'effet visuel reste actif si l'audio est indisponible. */}
+}
 function eventOccurrenceKey(e,timestamp){return `${e.id}:${new Date(timestamp).getFullYear()}-${new Date(timestamp).getMonth()+1}-${new Date(timestamp).getDate()}`}
 function celebrate(e,timestamp){
  const key=eventOccurrenceKey(e,timestamp);let seen=[];try{seen=JSON.parse(localStorage.getItem("memora-celebrated")||"[]")}catch(_){seen=[]}
  if(seen.includes(key))return;
  seen.push(key);try{localStorage.setItem("memora-celebrated",JSON.stringify(seen.slice(-300)))}catch(_){}
- $("celebrationTitle").textContent=e.name+" ✨";$("celebrationMessage").textContent=e.description||"Le moment que tu attendais est arrivé. Profite pleinement de cette journée !";$("celebration").classList.add("show");
+ $("celebrationTitle").textContent=e.name+" ✨";$("celebrationMessage").textContent=e.description||"Le moment que tu attendais est arrivé. Profite pleinement de cette journée !";const celebration=$("celebration");celebration.classList.remove("effect-confetti","effect-glow","effect-hearts","effect-stars","effect-flash","effect-nature");celebration.classList.add("effect-"+(e.visualEffect||"confetti"),"show");playEventSound(e.eventSound||"none");
  if("Notification" in window&&Notification.permission==="granted")try{new Notification("C’est le grand jour !",{body:e.name,tag:key})}catch(_){}
 }
 function checkCelebrations(){
@@ -335,7 +359,7 @@ function deleteEvent(id){
 }
 function openForm(id){
 editing=id||null;const e=events.find(x=>x.id===id);$("eventForm").reset();pendingImage=null;
-$("formTitle").textContent=e?"Modifier le souvenir":"Un nouveau souvenir";$("name").value=e?e.name:"";$("description").value=e?e.description||"":"";$("category").value=e?e.category||"autre":"autre";$("recurrence").value=e?e.recurrence||"none":"none";
+$("formTitle").textContent=e?"Modifier le souvenir":"Un nouveau souvenir";$("visualEffect").value=e?e.visualEffect||"confetti":"confetti";$("eventSound").value=e?e.eventSound||"none":"none";$("name").value=e?e.name:"";$("description").value=e?e.description||"":"";$("category").value=e?e.category||"autre":"autre";$("recurrence").value=e?e.recurrence||"none":"none";
 $("zoom").value=e?e.zoom||1:1;$("zoomValue").textContent=Number($("zoom").value).toFixed(2).replace(/0$/,"")+"×";
 $("darkness").value=e&&typeof e.shade==="number"?e.shade:globalShade;$("darknessValue").textContent=Math.round(Number($("darkness").value)*100)+"%";
 $("accent").value=e&&/^#[0-9a-f]{6}$/i.test(e.accent||"")?e.accent:"#e7c99a";$("textStyle").value=e?e.textStyle||"serif":"serif";
@@ -363,13 +387,14 @@ try{
 const old=events.find(x=>x.id===editing);let image=(old&&old.image)||photos[0];
 if(pendingImage)image=pendingImage;else if($("imageFile").files[0])image=await compressPhoto($("imageFile").files[0]);
 const rawShade=Number($("darkness").value),zoom=Number($("zoom").value);
-const item={id:editing||(String(Date.now())+Math.random().toString(16).slice(2)),name,date:new Date(date).toISOString(),description:$("description").value.trim(),category:$("category").value,recurrence:$("recurrence").value,image,zoom,shade:rawShade,accent:$("accent").value,textStyle:$("textStyle").value,titleSize:Number($("titleSize").value),subtitleSize:Number($("subtitleSize").value),titleColor:$("titleColor").value,subtitleColor:$("subtitleColor").value,letterSpacing:Number($("letterSpacing").value),posX:old&&Number.isFinite(old.posX)?old.posX:50,posY:old&&Number.isFinite(old.posY)?old.posY:50};
+const item={id:editing||(String(Date.now())+Math.random().toString(16).slice(2)),name,date:new Date(date).toISOString(),description:$("description").value.trim(),category:$("category").value,recurrence:$("recurrence").value,visualEffect:$("visualEffect").value,eventSound:$("eventSound").value,image,zoom,shade:rawShade,accent:$("accent").value,textStyle:$("textStyle").value,titleSize:Number($("titleSize").value),subtitleSize:Number($("subtitleSize").value),titleColor:$("titleColor").value,subtitleColor:$("subtitleColor").value,letterSpacing:Number($("letterSpacing").value),posX:old&&Number.isFinite(old.posX)?old.posX:50,posY:old&&Number.isFinite(old.posY)?old.posY:50};
 const previous=events;events=editing?events.map(x=>x.id===editing?item:x):[...events,item];
 if(!save()){events=previous;return}
 selected=(nearestUpcoming()||item).id;render();$("modal").classList.remove("open");notify("Souvenir enregistré ✨");
 }catch(err){alert("Impossible de traiter cette photo. Essaie avec une autre image ou une image plus légère.")}
 finally{saveBtn.disabled=false;saveBtn.textContent="Enregistrer"}
 });
+$("previewAmbience").onclick=()=>{const effect=$("visualEffect").value,box=$("celebration");box.classList.remove("effect-confetti","effect-glow","effect-hearts","effect-stars","effect-flash","effect-nature");box.classList.add("effect-"+effect,"show");$("celebrationTitle").textContent="Aperçu de l’effet";$("celebrationMessage").textContent="Voici l’ambiance choisie pour ton événement.";playEventSound($("eventSound").value)};
 $("remove").onclick=()=>{if(!editing||!confirm("Supprimer cet événement ?"))return;const id=editing;deleteEvent(id);$("modal").classList.remove("open")};
 ["titleSize","subtitleSize","letterSpacing"].forEach(id=>$(id).addEventListener("input",()=>{$(id+"Value").textContent=$(id).value+(id==="letterSpacing"?" px":" px")}));
 $("imageFile").addEventListener("change",async e=>{const file=e.target.files[0];if(!file)return;try{pendingImage=await compressPhoto(file);$("photoPreview").src=pendingImage;$("photoPreview").style.objectPosition="50% 50%";$("photoPreview").style.transform="scale("+$("zoom").value+")";notify("Photo prête à être enregistrée")}catch(err){alert("Cette photo ne peut pas être utilisée. Essaie une autre image.")}});
