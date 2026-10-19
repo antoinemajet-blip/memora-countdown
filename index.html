@@ -1,1 +1,401 @@
 
+
+
+
+<!DOCTYPE html>
+
+<html lang="fr">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+<meta name="theme-color" content="#101510">
+
+<title>Memora — Every moment matters</title>
+
+<style>
+
+:root{color-scheme:dark;--cream:#f4f0e7;--muted:#c4c4b9;--gold:#e7c99a;--glass:rgba(20,24,21,.46)}
+
+*{box-sizing:border-box}
+
+body{margin:0;background:#101510;color:var(--cream);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;min-height:100svh}
+
+button,input{font:inherit}
+
+button{cursor:pointer}
+
+.hero{position:relative;min-height:100svh;overflow:hidden;background:#202d2b}
+
+.photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:opacity .4s}
+
+.shade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.38),transparent 24%,rgba(0,0,0,.1) 45%,rgba(0,0,0,.78) 100%)}
+
+.content{position:relative;z-index:1;min-height:100svh;padding:calc(env(safe-area-inset-top) + 22px) 23px calc(env(safe-area-inset-bottom) + 26px);display:flex;flex-direction:column}
+
+header{display:flex;align-items:center;justify-content:space-between}
+
+.brand{font-size:13px;letter-spacing:4px;text-transform:uppercase;font-weight:600}
+
+.round{border:1px solid #ffffff55;background:#ffffff15;color:white;width:43px;height:43px;border-radius:50%;font-size:25px;backdrop-filter:blur(12px)}
+
+.eyebrow{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:#f0d7b2;margin-bottom:14px}
+
+.intro{margin-top:auto;padding-top:70px}
+
+h1{font-family:Georgia,serif;font-size:clamp(46px,13vw,72px);line-height:.98;letter-spacing:-2px;font-weight:400;margin:0 0 15px;overflow-wrap:anywhere}
+
+.subtitle{font-size:15px;color:#eee8dd;line-height:1.5;margin:0}
+
+.timer{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin:36px 0 30px}
+
+.unit{text-align:center;border-right:1px solid #ffffff38}
+
+.unit:last-child{border:0}
+
+.number{font-size:clamp(29px,8vw,43px);font-weight:300;letter-spacing:-1px;font-variant-numeric:tabular-nums}
+
+.unit-label{font-size:9px;letter-spacing:1.7px;text-transform:uppercase;color:#dedbd3;margin-top:8px}
+
+.bottom{margin-top:8px}
+
+.event-row{display:flex;align-items:center;gap:9px;overflow-x:auto;padding:3px 0 16px;scrollbar-width:none}
+
+.event-row::-webkit-scrollbar{display:none}
+
+.pill{flex:0 0 auto;padding:11px 15px;border-radius:30px;border:1px solid #ffffff50;background:#ffffff12;color:white;font-size:12px;backdrop-filter:blur(14px)}
+
+.pill.active{background:var(--cream);color:#252720;border-color:var(--cream)}
+
+.actions{display:flex;gap:10px}
+
+.primary{flex:1;border:0;border-radius:30px;padding:16px;background:var(--cream);color:#252720;font-size:14px;font-weight:600}
+
+.secondary{border:1px solid #ffffff55;border-radius:30px;padding:15px 18px;background:#ffffff13;color:white}
+
+.footer{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-top:20px;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:#ffffffb5}
+
+.modal{position:fixed;inset:0;z-index:5;background:#0009;display:none;align-items:flex-end;justify-content:center;padding-top:30px}
+
+.modal.open{display:flex}
+
+.sheet{width:100%;max-width:520px;background:#1c211e;border:1px solid #ffffff20;border-radius:25px 25px 0 0;padding:26px 23px calc(env(safe-area-inset-bottom) + 25px);max-height:90svh;overflow:auto}
+
+.sheet h2{font:32px Georgia,serif;margin:0 0 8px}
+
+.sheet p{font-size:13px;color:#c4c4b9;margin:0 0 22px}
+
+label{display:block;font-size:12px;color:#d8d4ca;margin:17px 0 8px}
+
+input{width:100%;padding:14px;border:1px solid #ffffff30;border-radius:12px;background:#ffffff0c;color:white;outline:none}
+
+input:focus{border-color:var(--gold)}
+
+.form-actions{display:flex;gap:10px;margin-top:24px}
+
+.form-actions button{flex:1}
+
+.delete{font-size:12px;color:#ffcbc1;text-decoration:underline;background:none;border:0;padding:18px 0 0}
+
+.empty{font-size:12px;color:#ffffffb0;padding:8px 0 15px}
+
+@media(min-width:650px){.content{max-width:650px;margin:auto;width:100%;padding-left:45px;padding-right:45px}.hero{min-height:100svh}.number{font-size:48px}}
+
+</style>
+
+</head>
+
+<body>
+
+<main class="hero">
+
+<img class="photo" id="photo" alt="" src="https://images.unsplash.com/photo-1470770841072-f978cf4d019e?auto=format&fit=crop&w=1800&q=85">
+
+<div class="shade"></div>
+
+<div class="content">
+
+<header>
+
+<div class="brand">MEMORA · MOMENTS</div>
+
+<button class="round" id="settings" aria-label="Changer de photo">↗</button>
+
+</header>
+
+<section class="intro">
+
+<div class="eyebrow" id="eyebrow">A LITTLE CLOSER, EVERY DAY</div>
+
+<h1 id="eventTitle">Your next<br>adventure.</h1>
+
+<p class="subtitle" id="eventSubtitle">Chaque grand moment commence par l'attente.</p>
+
+<div class="timer" aria-live="polite">
+
+<div class="unit"><div class="number" id="days">000</div><div class="unit-label">Jours</div></div>
+
+<div class="unit"><div class="number" id="hours">00</div><div class="unit-label">Heures</div></div>
+
+<div class="unit"><div class="number" id="minutes">00</div><div class="unit-label">Minutes</div></div>
+
+<div class="unit"><div class="number" id="seconds">00</div><div class="unit-label">Secondes</div></div>
+
+</div>
+
+</section>
+
+<section class="bottom">
+
+<div class="event-row" id="eventList"></div>
+
+<div class="actions">
+
+<button class="primary" id="add">＋ Nouvel événement</button>
+
+<button class="secondary" id="edit" aria-label="Modifier l'événement">✎</button>
+
+</div>
+
+<div class="footer"><span>Make time meaningful</span><span id="dateLabel">YOUR STORY, YOUR TIME</span></div>
+
+</section>
+
+</div>
+
+</main>
+
+<div class="modal" id="modal">
+
+<form class="sheet" id="eventForm">
+
+<h2 id="formTitle">Un nouveau souvenir</h2>
+
+<p>Un moment à attendre, une histoire à écrire.</p>
+
+<label for="name">Nom de l'événement</label>
+
+<input id="name" maxlength="70" placeholder="Ex. Nos prochaines vacances" required>
+
+<label for="date">Date et heure</label>
+
+<input id="date" type="datetime-local" required>
+
+<label for="description">Petite phrase (facultatif)</label>
+
+<input id="description" maxlength="100" placeholder="Ex. Le début d'une belle aventure">
+
+<label for="imageUrl">Photo personnelle (URL facultative)</label>
+
+<input id="imageUrl" type="url" placeholder="https://...">
+
+<div class="form-actions">
+
+<button type="button" class="secondary" id="cancel">Annuler</button>
+
+<button type="submit" class="primary">Enregistrer</button>
+
+</div>
+
+<button type="button" class="delete" id="remove" hidden>Supprimer cet événement</button>
+
+</form>
+
+</div>
+
+<script>
+
+(function(){
+
+const $=id=>document.getElementById(id);
+
+const photos=[
+
+"https://images.unsplash.com/photo-1470770841072-f978cf4d019e?auto=format&fit=crop&w=1800&q=85",
+
+"https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1800&q=85",
+
+"https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1800&q=85",
+
+"https://images.unsplash.com/photo-1470252649378-9c29740c9fa8?auto=format&fit=crop&w=1800&q=85"
+
+];
+
+const defaultEvents=[{
+
+id:"welcome",name:"Your next adventure.",date:new Date(Date.now()+30*86400000).toISOString(),
+
+description:"Chaque grand moment commence par l'attente.",image:photos[0]
+
+}];
+
+let events=[];
+
+try{events=JSON.parse(localStorage.getItem("memora-events")||"null")||defaultEvents}catch(e){events=defaultEvents}
+
+if(!Array.isArray(events)||!events.length)events=defaultEvents;
+
+let selected=events[0].id,editing=null,photoIndex=0;
+
+function save(){try{localStorage.setItem("memora-events",JSON.stringify(events))}catch(e){}}
+
+function current(){return events.find(e=>e.id===selected)||events[0]}
+
+function safeDate(d){const t=new Date(d).getTime();return Number.isFinite(t)?t:Date.now()}
+
+function renderList(){
+
+$("eventList").replaceChildren();
+
+events.forEach(e=>{
+
+const b=document.createElement("button");b.className="pill"+(e.id===selected?" active":"");b.textContent=e.name;
+
+b.onclick=()=>{selected=e.id;render();};$("eventList").append(b);
+
+});
+
+if(!events.length){$("eventList").innerHTML='<div class="empty">Ajoute ton premier événement pour commencer.</div>'}
+
+}
+
+function render(){
+
+renderList();const e=current();
+
+if(!e)return;
+
+$("eventTitle").textContent=e.name;
+
+$("eventSubtitle").textContent=e.description||"Chaque grand moment commence par l'attente.";
+
+$("photo").src=e.image||photos[0];
+
+const t=safeDate(e.date);
+
+$("dateLabel").textContent=new Date(t).toLocaleDateString("fr-FR",{day:"2-digit",month:"short",year:"numeric"});
+
+tick();
+
+}
+
+function tick(){
+
+const e=current();if(!e)return;
+
+let diff=safeDate(e.date)-Date.now();
+
+if(diff<=0){
+
+$("days").textContent="000";$("hours").textContent="00";$("minutes").textContent="00";$("seconds").textContent="00";
+
+$("eyebrow").textContent="CE MOMENT EST ARRIVÉ ✨";return;
+
+}
+
+$("eyebrow").textContent="A LITTLE CLOSER, EVERY DAY";
+
+const d=Math.floor(diff/86400000);diff%=86400000;
+
+const h=Math.floor(diff/3600000);diff%=3600000;
+
+const m=Math.floor(diff/60000);const s=Math.floor(diff%60000/1000);
+
+$("days").textContent=String(d).padStart(3,"0");
+
+$("hours").textContent=String(h).padStart(2,"0");
+
+$("minutes").textContent=String(m).padStart(2,"0");
+
+$("seconds").textContent=String(s).padStart(2,"0");
+
+}
+
+function openForm(id){
+
+editing=id||null;const e=events.find(x=>x.id===id);
+
+$("eventForm").reset();
+
+$("formTitle").textContent=e?"Modifier le souvenir":"Un nouveau souvenir";
+
+$("name").value=e?e.name:"";
+
+$("description").value=e?e.description||"":"";
+
+$("imageUrl").value=e&&e.image&&!photos.includes(e.image)?e.image:"";
+
+const date=e?new Date(e.date):new Date(Date.now()+86400000);
+
+date.setMinutes(date.getMinutes()-date.getTimezoneOffset());
+
+$("date").value=date.toISOString().slice(0,16);
+
+$("remove").hidden=!e;
+
+$("modal").classList.add("open");
+
+}
+
+$("add").onclick=()=>openForm(null);
+
+$("edit").onclick=()=>{if(current())openForm(current().id)};
+
+$("cancel").onclick=()=>$("modal").classList.remove("open");
+
+$("modal").addEventListener("click",e=>{if(e.target===$("modal"))$("modal").classList.remove("open")});
+
+$("eventForm").onsubmit=e=>{
+
+e.preventDefault();
+
+const name=$("name").value.trim();const date=$("date").value;
+
+if(!name||!date||safeDate(date)<=Date.now()){alert("Choisis un nom et une date future.");return}
+
+const old=events.find(x=>x.id===editing);
+
+const image=$("imageUrl").value.trim()||(old&&old.image)||photos[0];
+
+const item={id:editing||String(Date.now())+Math.random().toString(16).slice(2),name,date:new Date(date).toISOString(),description:$("description").value.trim(),image};
+
+if(editing)events=events.map(x=>x.id===editing?item:x);else events.push(item);
+
+selected=item.id;save();render();$("modal").classList.remove("open");
+
+};
+
+$("remove").onclick=()=>{
+
+if(!editing||!confirm("Supprimer cet événement ?"))return;
+
+events=events.filter(x=>x.id!==editing);selected=events[0]?.id||null;
+
+if(!events.length){events=[{...defaultEvents[0],id:String(Date.now())}];selected=events[0].id}
+
+save();render();$("modal").classList.remove("open");
+
+};
+
+$("settings").onclick=()=>{
+
+photoIndex=(photoIndex+1)%photos.length;
+
+const e=current();if(!e)return;
+
+e.image=photos[photoIndex];save();render();
+
+};
+
+render();setInterval(tick,1000);
+
+})();
+
+</script>
+
+</body>
+
+</html>
