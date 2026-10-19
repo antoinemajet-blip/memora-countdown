@@ -17,23 +17,18 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 .hero{position:relative;min-height:100svh;overflow:hidden;background:#202d2b;isolation:isolate}
 .hero.empty-state{background:radial-gradient(ellipse at 50% 35%,#263a35 0%,#101510 72%)}
 .hero.empty-state .photo,.hero.empty-state .shade{display:none}
-.hero.empty-state .intro{margin:0;padding-top:clamp(70px,14vh,130px);text-align:center}
+.hero.empty-state .intro{margin:auto 0;padding-top:40px;text-align:center}
 .hero.empty-state .eyebrow{font-size:11px}
 .hero.empty-state h1{font-size:clamp(38px,10vw,58px);letter-spacing:-1px}
 .hero.empty-state .subtitle{margin:0 auto;max-width:30ch}
 .hero.empty-state .timer{display:none}
 .hero.empty-state .event-row{display:none}
 .hero.empty-state #edit{display:none}
-.hero.empty-state .footer{justify-content:center}
-.hero.empty-state .bottom{margin-top:auto;padding-bottom:12px}
-.hero.empty-state .actions{display:flex;gap:9px;margin-top:14px}
+.hero.empty-state .actions{display:flex}
 .hero.empty-state #viewAll{display:block}
-.hero.empty-state #add{display:grid;place-items:center;min-width:52px}
-.hero.empty-state .empty-cta{display:block;margin-top:14px}
-.hero.empty-state .empty-cta .primary{min-height:48px}
-.hero.empty-state .footer{margin-top:14px}
+.hero.empty-state .footer{justify-content:center}
 .empty-cta{display:none}
-.hero.empty-state .empty-cta{display:block;margin-top:14px}
+.hero.empty-state .empty-cta{display:block;margin-top:26px}
 .empty-cta .primary{width:100%;max-width:330px}
 .photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:var(--pos,50% 50%);transform:scale(var(--zoom,1));transition:opacity .3s,transform .2s;z-index:-2}
 .shade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.48),transparent 28%,rgba(0,0,0,.08) 46%,rgba(0,0,0,var(--shade)) 100%);z-index:-1;pointer-events:none}
@@ -213,7 +208,7 @@ if(!Array.isArray(events))events=[];
 // Keep the original localStorage key and tolerate older event objects.
 events=events.map(e=>({...e,zoom:Number(e.zoom)||1,shade:typeof e.shade==="number"?e.shade:.42,accent:e.accent||"#e7c99a",textStyle:e.textStyle||"serif",titleSize:Number(e.titleSize)||72,subtitleSize:Number(e.subtitleSize)||15,titleColor:e.titleColor||"#f4f0e7",subtitleColor:e.subtitleColor||"#f1eee7",letterSpacing:Number.isFinite(e.letterSpacing)?e.letterSpacing:-2,posX:Number.isFinite(e.posX)?e.posX:50,posY:Number.isFinite(e.posY)?e.posY:50,category:e.category||"autre"}));
 const nearestUpcoming=()=>[...events].filter(e=>safeDate(e.date)>=Date.now()).sort((a,b)=>safeDate(a.date)-safeDate(b.date))[0];
-let selected=(nearestUpcoming()||events[0]).id,editing=null,photoIndex=0,pendingImage=null,pointerStart=null,toastTimer=null,globalShade=.42;
+let selected=(nearestUpcoming()||events[0]||{}).id||null,editing=null,photoIndex=0,pendingImage=null,pointerStart=null,toastTimer=null,globalShade=.42;
 function notify(msg){$("toast").textContent=msg;$("toast").classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(()=>$("toast").classList.remove("show"),2600)}
 function save(){try{localStorage.setItem("memora-events",JSON.stringify(events));return true}catch(e){notify("Stockage saturé : essaie une photo plus légère.");return false}}
 function current(){return events.find(e=>e.id===selected)||nearestUpcoming()||events[0]||null}
